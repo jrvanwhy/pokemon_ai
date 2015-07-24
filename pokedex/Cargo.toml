@@ -1,4 +1,4 @@
 [package]
 name = "pokedex"
 version = "0.1.0"
-authors = ["Johnathan Van Why <jrvanwhy@gmail.com>"]
+authors = ["Cameron Bowie <bowiec@onid.oregonstate.edu>", "Johnathan Van Why <jrvanwhy@gmail.com>"]
