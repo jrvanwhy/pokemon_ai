@@ -3,6 +3,19 @@ use pokemon::Pokemon;
 // The total number of Pokemon
 const NUM_POKEMON: usize = 721;
 
+pub struct Move
+{
+	id: i32,
+	name: String,
+	type_id: i32,
+	power: i32,
+	pp: i32,
+	accuracy: i32,
+	effect_id: i32,
+	effect_chance: i32,
+	damage_class: DamageClass,
+}
+
 // Structure to handle the variable Pokemon configuration
 // and to process the default stats for the different types of Pokemon
 pub struct Pokedex

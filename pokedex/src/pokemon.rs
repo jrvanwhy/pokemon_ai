@@ -15,19 +15,6 @@ pub enum DamageClass
 	Special
 }
 
-pub struct Move
-{
-	id: i32,
-	name: String,
-	type_id: i32,
-	power: i32,
-	pp: i32,
-	accuracy: i32,
-	effect_id: i32,
-	effect_chance: i32,
-	damage_class: DamageClass,
-}
-
 #[derive(Clone)]
 pub struct Pokemon
 {
