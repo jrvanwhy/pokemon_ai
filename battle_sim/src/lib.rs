@@ -1,71 +1,19 @@
-pub enum Status
-{
-	Paralyzed,
-	Poisoned,
-	Asleep,
-	Healthy
-}
-
-#[derive(Clone)]
-pub struct Pokemon
-{
-	// identifiers
-	id: i32,
-	// current state
-	status: i32,
-	accuracy: i32,
-	hp: i32,
-	attack: i32,
-	defense: i32,
-	sp_atk: i32,
-	sp_def: i32,
-	speed: i32,
-}
-
-impl Pokemon
-{
-	fn get_attack(self) -> (i32)
-	{
-		42
-	}
-
-	fn get_defense(self) -> (i32)
-	{
-		42
-	}
-	
-	fn get_sp_atk(self) -> (i32)
-	{
-		42
-	}
-	
-	fn get_sp_def(self) -> (i32)
-	{
-		42
-	}
-	
-	fn get_hp(self) -> (i32)
-	{
-		42
-	}
-	
-	fn get_speed(self) -> (i32)
-	{
-		42
-	}
-	
-}
+extern crate pokedex;
+use pokedex::Pokemon;
 
 pub trait PokePlayer
 {
-	fn get_team(self) -> (Vec<Pokemon>);
+	fn get_team(&self) -> (Vec<Pokemon>);
 
-	fn is_defeated(self) -> (bool);
+	fn is_defeated(&self) -> (bool);
 
-	fn get_cur_pkn(self) -> (Pokemon);
+	fn get_cur_pkn(&self) -> (Pokemon);
 
-	// fn 
+	fn choose_move(&self) -> (i32);
 
+	fn choose_pkn(&self) -> (i32);
+
+	fn choose_action(&self) -> (i32);
 }
 
 // struct HumanPlayer
@@ -87,10 +35,19 @@ pub trait PokePlayer
 //     cur_player: i32,
 // }
 
-pub fn battle<T1: PokePlayer, T2: PokePlayer>(_p1: T1, _p2: T2) -> (bool)
+pub fn battle<T1: PokePlayer, T2: PokePlayer>(p1: T1, p2: T2) -> (bool)
 {
+	loop
+	{
 
 
-
-	true
+		if p1.is_defeated()
+		{
+			return false;
+		}
+		else if p2.is_defeated()
+		{
+			return true;
+		}
+	}
 }
