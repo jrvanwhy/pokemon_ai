@@ -19,5 +19,21 @@ pub struct Pokemon
 	defense: i32,
 	sp_atk: i32,
 	sp_def: i32,
-	speed: i32,
+	pub speed: i32,
+}
+
+impl Pokemon
+{
+	pub fn use_move(&self, mv: i32) -> ()
+	{
+	}
+
+	pub fn use_move_on(&self, mv: i32) -> ()
+	{
+	}
+
+	pub fn is_ko(&self) -> (bool)
+	{
+		false
+	}
 }
