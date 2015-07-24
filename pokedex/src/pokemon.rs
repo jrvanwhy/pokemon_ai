@@ -1,3 +1,5 @@
+use pokedex::PokeDesc;
+
 pub enum Status
 {
 	Paralyzed,
@@ -6,20 +8,41 @@ pub enum Status
 	Healthy
 }
 
+pub enum DamageClass
+{
+	Status,
+	Physical,
+	Special
+}
+
+pub struct Move
+{
+	id: i32,
+	name: str,
+	type_id: i32,
+	power: i32,
+	pp: i32,
+	accuracy: i32,
+	effect_id: i32,
+	effect_chance: i32,
+	damage_class: DamageClass,
+}
+
 #[derive(Clone)]
 pub struct Pokemon
 {
 	// identifiers
 	id: i32,
 	// current state
-	status: i32,
-	accuracy: i32,
+	status: Status,
+	accu_evas_stage: i32,
 	hp: i32,
-	attack: i32,
-	defense: i32,
-	sp_atk: i32,
-	sp_def: i32,
-	pub speed: i32,
+	attack_stage: i32,
+	defense_stage: i32,
+	sp_atk_stage: i32,
+	sp_def_stage: i32,
+	speed_stage: i32,
+	stats: PokeDesc
 }
 
 impl Pokemon
