@@ -18,7 +18,7 @@ pub enum DamageClass
 pub struct Move
 {
 	id: i32,
-	name: str,
+	name: String,
 	type_id: i32,
 	power: i32,
 	pp: i32,
@@ -42,7 +42,8 @@ pub struct Pokemon
 	sp_atk_stage: i32,
 	sp_def_stage: i32,
 	speed_stage: i32,
-	stats: PokeDesc
+	stats: PokeDesc,
+	moves: Vec<Move>,
 }
 
 impl Pokemon
@@ -58,5 +59,9 @@ impl Pokemon
 	pub fn is_ko(&self) -> (bool)
 	{
 		false
+	}
+
+	pub fn add_move(&self, mv: Move) -> ()
+	{
 	}
 }
