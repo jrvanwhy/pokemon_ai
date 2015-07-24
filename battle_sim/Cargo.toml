@@ -1,0 +1,4 @@
+[package]
+name = "battle_sim"
+version = "0.1.0"
+authors = ["Cameron Bowie <bowiec@onid.oregonstate.edu>"]
