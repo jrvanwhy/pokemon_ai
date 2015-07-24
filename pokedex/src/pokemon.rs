@@ -1,18 +1,12 @@
-use pokedex::PokeDesc;
+use pokedex::{Move,PokeDesc};
 
+#[derive(Clone)]
 pub enum Status
 {
 	Paralyzed,
 	Poisoned,
 	Asleep,
 	Healthy
-}
-
-pub enum DamageClass
-{
-	Status,
-	Physical,
-	Special
 }
 
 #[derive(Clone)]

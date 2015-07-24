@@ -3,6 +3,15 @@ use pokemon::Pokemon;
 // The total number of Pokemon
 const NUM_POKEMON: usize = 721;
 
+#[derive(Clone)]
+pub enum DamageClass
+{
+	Status,
+	Physical,
+	Special
+}
+
+#[derive(Clone)]
 pub struct Move
 {
 	id: i32,
@@ -14,6 +23,13 @@ pub struct Move
 	effect_id: i32,
 	effect_chance: i32,
 	damage_class: DamageClass,
+}
+
+#[derive(Clone)]
+pub struct PokeDesc
+{
+	id: i32,
+	hp: i32
 }
 
 // Structure to handle the variable Pokemon configuration
