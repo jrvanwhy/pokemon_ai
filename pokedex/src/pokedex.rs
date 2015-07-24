@@ -36,12 +36,9 @@ pub struct PokeDesc
 // and to process the default stats for the different types of Pokemon
 pub struct Pokedex
 {
-	// Vector of base-stat Pokemon.
-	base_pokemon: Vec<Pokemon>,
-
-	// Each element of this list is None (Pokemon disabled)
-	// or an index into base_pokemon
-	id_map: [Option<usize>; NUM_POKEMON],
+	// Vector of base-stat descriptions. Only includes pokemon that are currently enabled
+	// (as determined by the config file, if found).
+	base_pokemon: Vec<Option<PokeDesc>>,
 }
 
 impl Pokedex
@@ -50,18 +47,6 @@ impl Pokedex
 	// configuration file and do all necessary Pokemon parsing.
 	pub fn new() -> Pokedex
 	{
-		let mut out = Pokedex { base_pokemon: Vec::new(), id_map: [None; NUM_POKEMON] };
-		out
-	}
-
-	// Gives a reference to a base-stat Pokemon with the given ID,
-	// 
-
-	// Creates a new Pokemon with the base stats for its type.
-	// If the given ID does not exist or is disabled, will return
-	// None
-	pub fn new_pokemon(&self, id: i32) -> Option<Pokemon>
-	{
-		None // TODO: This
+		Pokedex { base_pokemon: Vec::with_capacity(NUM_POKEMON) }
 	}
 }
