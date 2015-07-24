@@ -1,0 +1,22 @@
+TODO
+
+[ ] Poke-Parser
+	( ) Read in name/id
+	( ) Read in types
+	( ) Read in moves
+	( ) Read in abilities
+	( ) Read in type efficacy
+	( ) Read in status effects
+	( ) Read in stats
+	( ) Read in other??
+
+[ ] Battle Sim
+	( ) Interface for person (why not??)
+	( ) API for AI (that's fun...)
+	( ) Keep track of things
+		[ ]
+
+[ ] AI
+
+[ ] Moderator
+
