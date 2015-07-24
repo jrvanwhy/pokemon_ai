@@ -29,11 +29,11 @@ pub struct Pokemon
 
 impl Pokemon
 {
-	pub fn use_move(&self, mv: i32) -> ()
+	pub fn use_move(&self, _mv: i32) -> ()
 	{
 	}
 
-	pub fn use_move_on(&self, mv: i32) -> ()
+	pub fn use_move_on(&self, _mv: i32) -> ()
 	{
 	}
 
@@ -42,7 +42,7 @@ impl Pokemon
 		false
 	}
 
-	pub fn add_move(&self, mv: Move) -> ()
+	pub fn add_move(&self, _mv: Move) -> ()
 	{
 	}
 }
