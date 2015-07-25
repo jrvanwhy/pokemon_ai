@@ -1,3 +1,7 @@
+extern crate csv;
+
+use std::fs::File;
+
 #[derive(Clone)]
 pub enum DamageClass
 {
@@ -27,49 +31,15 @@ pub struct PokeDesc
 	hp: i32
 }
 
-// Struct keeping track of the active Pokemon IDs
-struct ActivePokes
-{
-	active_ids: Vec<i32>
-}
+// Convenience function to get a CSV Reader for the given file
+fn get_csv_rdr(csv_dir: String, filename: &str) -> csv::Reader<File> {
+	use std::error::Error;
 
-impl ActivePokes
-{
-	// Constructor -- looks for a configuration file and uses it if possible.
-	fn new() -> ActivePokes
+	let path = csv_dir + filename;
+	match csv::Reader::from_file(&path)
 	{
-		use std::env;
-		use std::fs::File;
-
-		// Our output variable
-		let obj = ActivePokes { active_ids: Vec::new() };
-
-		// Try to read the configuration environment variable.
-		let env_result = env::var("POKEDEX_CONFIG");
-
-		// If we failed to read it, then return none
-		if env_result.is_err()
-		{
-			return obj
-		}
-
-		// Try to open the file
-		let file_result = File::open(env_result.unwrap());
-
-		obj
-	}
-
-	// Function to check if a given Pokemon ID is enabled.
-	fn id_active(&self, id: i32) -> bool
-	{
-		if self.active_ids.is_empty()
-		{
-			true
-		}
-		else
-		{
-			self.active_ids.binary_search(&id).is_ok()
-		}
+		Ok(rdr) => rdr,
+		Err(why) => panic!("Could not open file {} (full path: {}). Reason: {}.", filename, path, Error::description(&why))
 	}
 }
 
@@ -77,9 +47,8 @@ impl ActivePokes
 // and to process the default stats for the different types of Pokemon
 pub struct Pokedex
 {
-	// Vector of base-stat descriptions. Only includes pokemon that are currently enabled
-	// (as determined by the config file, if found).
-	base_pokemon: Vec<Option<PokeDesc>>,
+	// Vector of base-stat descriptions.
+	base_pokemon: Vec<PokeDesc>,
 }
 
 impl Pokedex
@@ -88,15 +57,35 @@ impl Pokedex
 	// configuration file and do all necessary Pokemon parsing.
 	pub fn new() -> Pokedex
 	{
-		// Create the Pokemon selector
-		let active_ids = ActivePokes::new();
+		use std::env;
+		use std::fs::File;
 
+		const CSV_DIR_ENV_VAR: &'static str = "POKEDEX_DIR";
+
+		// Read the environment variable which has the location of the
+		// configuration and CSV file directory
+		let csv_dir =
+			match env::var(CSV_DIR_ENV_VAR)
+			{
+				Ok(path) => path + "/",
+				Err(_) => { panic!("Could not find the {} environment variable!", CSV_DIR_ENV_VAR) }
+			};
+
+		// Read the pokemon.csv file.
+		for record in get_csv_rdr(csv_dir, "pokemon.csv").decode() {
+			let (id, identifier, species_id, height, weight, base_experience, order, is_default):
+			    (i32, String, i32, i32, i32, i32, i32, i32) = record.unwrap();
+
+			println!("{:?}", (id, identifier, species_id, height, weight, base_experience, order, is_default));
+		}
+
+		// Temporary
 		Pokedex { base_pokemon: Vec::new() }
 	}
 
 	// Returns the pokemon description for the given Pokemon ID, if it exists.
 	// Otherwise returns None
-	pub fn get_poke_desc(&self, id: usize) -> &Option<PokeDesc>
+	pub fn get_poke_desc(&self, id: usize) -> &PokeDesc
 	{
 		&(self.base_pokemon[id-1])
 	}

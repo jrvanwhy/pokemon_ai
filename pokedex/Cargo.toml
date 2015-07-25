@@ -2,3 +2,6 @@
 name = "pokedex"
 version = "0.1.0"
 authors = ["Cameron Bowie <bowiec@onid.oregonstate.edu>", "Johnathan Van Why <jrvanwhy@gmail.com>"]
+
+[dependencies]
+csv = "0.14.2"
