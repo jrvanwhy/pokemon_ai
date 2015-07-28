@@ -3,5 +3,8 @@ name = "battle_sim"
 version = "0.1.0"
 authors = ["Cameron Bowie <bowiec@onid.oregonstate.edu>"]
 
+[dependencies]
+rand = "0.3"
+
 [dependencies.pokedex]
 path = "../pokedex"
