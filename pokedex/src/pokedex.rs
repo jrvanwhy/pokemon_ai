@@ -3,6 +3,7 @@ extern crate csv;
 use std::fs::File;
 
 #[derive(Clone)]
+#[derive(PartialEq)]
 pub enum DamageClass
 {
 	Status,
