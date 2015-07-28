@@ -2,8 +2,7 @@ extern crate csv;
 
 use std::fs::File;
 
-#[derive(Clone)]
-#[derive(PartialEq)]
+#[derive(Clone,PartialEq,Debug)]
 pub enum DamageClass
 {
 	Status,
@@ -11,7 +10,7 @@ pub enum DamageClass
 	Special
 }
 
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct MoveDesc
 {
 	pub id: i32,
@@ -27,7 +26,7 @@ pub struct MoveDesc
 
 // all of these pubs can't be the best way to do this.
 // I'm not sure what is though...
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct PokeDesc
 {
 	pub id: i32,
