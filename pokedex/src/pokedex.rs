@@ -83,10 +83,14 @@ impl Pokedex
 		// Output variable
 		let mut out = Pokedex { base_pokemon: Vec::new() };
 
-		// Read the pokemon.csv file.
-		for record in get_csv_rdr(csv_dir, "pokemon.csv").decode() {
+		// Read the pokemon.csv file. Stop once the Pokemon IDs become non-consecutive.
+		for record in get_csv_rdr(csv_dir.clone(), "pokemon.csv").decode() {
 			let (id, identifier, _, _, _, _, _, _):
 			    (i32, String, i32, i32, i32, i32, i32, i32) = record.unwrap();
+
+			if id != out.base_pokemon.len() as i32 + 1 {
+				break;
+			}
 
 			out.base_pokemon.push(PokeDesc { id: id,
 			                                 type_ids: Vec::new(),
@@ -98,6 +102,15 @@ impl Pokedex
 			                                 speed: 0,
 			                                 avail_moves: Vec::new(),
 			                                 name: identifier } );
+		}
+
+		// Read in the Pokemon types
+		for record in get_csv_rdr(csv_dir.clone(), "pokemon_types.csv").decode() {
+			let (poke_id, type_id, _): (usize, i32, i32) = record.unwrap();
+
+			if poke_id <= out.base_pokemon.len() {
+				out.base_pokemon[poke_id-1].type_ids.push(type_id);
+			}
 		}
 
 		out
