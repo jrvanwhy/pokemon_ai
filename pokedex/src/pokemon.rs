@@ -1,6 +1,8 @@
 extern crate rand;
 
-use pokedex::{MoveDesc,PokeDesc};
+use rand::{random, Closed01};
+use pokedex::{MoveDesc,PokeDesc,DamageClass};
+use std::cmp;
 
 #[derive(Clone)]
 pub enum Status
@@ -15,7 +17,7 @@ pub enum Status
 pub struct Move
 {
 	id: i32,
-	desc: MoveDesc,
+	pub desc: MoveDesc,
 	pp: i32
 }
 
@@ -33,6 +35,7 @@ pub struct Pokemon
 	// these are used for
 	// calculating stat
 	// multiplier
+	crit_stage: i32,
 	accuracy_stage: i32,
 	evasion_stage: i32,
 	attack_stage: i32,
@@ -42,6 +45,7 @@ pub struct Pokemon
 	speed_stage: i32,
 }
 
+// this is temporary...
 fn type_efficacy(_mv_type: &i32, _defender_types: &Vec<i32>) -> (f64)
 {
 	1.0
@@ -128,11 +132,44 @@ impl Pokemon
 		self.calc_stat(self.speed_stage, self.desc.speed)
 	}
 
-	pub fn calc_damage(&self, attacker: &Pokemon, defender: &Pokemon, mv: &Move) -> (i32)
+	// calculates the crit modifier based on stage value
+	// does not (yet) affect other stat changes. rather it
+	// follows the gen II method
+	pub fn calc_crit(&self) -> (f64)
 	{
-		// need to get type efficacy information as well
-		// TODO: determine interface for type efficacy info
-		let mut modifier = if attacker.desc.type_ids.contains(&mv.desc.type_id)
+		let mut prob = 0.0;
+
+		match self.crit_stage
+		{
+			0 => prob = 0.0625,
+			1 => prob = 0.125,
+			2 => prob = 0.25,
+			3 => prob = 0.333,
+			_ => prob = 0.50,
+		}
+
+		let Closed01(res) = random::<Closed01<f64>>();
+		if res < prob
+		{
+			2.0
+		}
+		else
+		{
+			1.0
+		}
+	}
+
+	// 
+	pub fn calc_damage(&self, mv: &Move, foe: &Pokemon) -> (i32)
+	{
+		// status moves don't do damage (hopefully...)
+		if mv.desc.damage_class == DamageClass::Status
+		{
+			return 0;
+		}
+
+		// if move is same type as pokemon, does 1.5 damage
+		let mut modifier = if foe.desc.type_ids.contains(&mv.desc.type_id)
 		{
 			1.50
 		}
@@ -141,10 +178,23 @@ impl Pokemon
 			1.0
 		};
 
-		modifier *= type_efficacy(&mv.desc.type_id, &defender.desc.type_ids);
+		modifier *= type_efficacy(&mv.desc.type_id, &self.desc.type_ids);
+		modifier *= self.calc_crit();
 
-		let mut damage = (2 * attacker.level + 10) as f64 / 250.0;
-		damage *= attacker.calc_attack() as f64 / defender.calc_defense() as f64;
+		// random modifier from 0.85 to 1.0
+		let Closed01(res) = random::<Closed01<f64>>();
+		modifier *= 0.85 + 0.15 * res;
+
+		let mut damage = (2 * foe.level + 10) as f64 / 250.0;
+
+		// different damage classes use different stats
+		damage *= match mv.desc.damage_class
+		{
+			DamageClass::Physical => foe.calc_attack() as f64 / self.calc_defense() as f64,
+			DamageClass::Special => foe.calc_sp_atk() as f64 / self.calc_sp_def() as f64,
+			_ => panic!("tried to deal damage with status move. this should never happen.")
+		};
+
 		damage *= mv.desc.power as f64;
 		damage += 2.0;
 		damage *= modifier;
@@ -152,14 +202,23 @@ impl Pokemon
 		damage as i32
 	}
 
-	pub fn use_move(&self, _mv: &Move, _foe: &Pokemon) -> ()
+	// this implements move effects on the user of the move
+	// these include status changes and stat modification
+	pub fn use_move(&self, mv: &Move, _foe: &Pokemon) -> ()
 	{
-		// not sure yet...
+		match mv.desc.damage_class
+		{
+			DamageClass::Status => println!("status moves are not implemented yet for the user. sorry."),
+			_ => println!("physical and special moves are not implemented yet for the user. waiting on move data...")
+		}
 	}
 
-	pub fn receive_move(&self, _mv: &Move, _foe: &Pokemon) -> ()
+	// this implements move effects on the recipient of the attack
+	// these can be status, stat, or damage
+	pub fn receive_move(&self, mv: &Move, foe: &Pokemon) -> ()
 	{
-		// 
+		// currently just deals damage
+		hp = cmp::max(0, hp - self.calc_damage(mv, foe));
 	}
 
 	pub fn is_ko(&self) -> (bool)
