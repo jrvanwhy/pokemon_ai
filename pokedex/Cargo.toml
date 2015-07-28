@@ -5,3 +5,4 @@ authors = ["Cameron Bowie <bowiec@onid.oregonstate.edu>", "Johnathan Van Why <jr
 
 [dependencies]
 csv = "0.14.2"
+rand = "0.3"
