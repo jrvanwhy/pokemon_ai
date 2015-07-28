@@ -105,8 +105,8 @@ impl Pokedex
 
 	// Returns the pokemon description for the given Pokemon ID, if it exists.
 	// Otherwise returns None
-	pub fn get_poke_desc(&self, id: usize) -> &PokeDesc
+	pub fn get_poke_desc(&self, id: usize) -> Option<&PokeDesc>
 	{
-		&(self.base_pokemon[id-1])
+		self.base_pokemon.get(id-1)
 	}
 }
