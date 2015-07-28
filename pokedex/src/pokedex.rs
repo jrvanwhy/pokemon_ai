@@ -11,24 +11,32 @@ pub enum DamageClass
 }
 
 #[derive(Clone)]
-pub struct Move
+pub struct MoveDesc
 {
-	id: i32,
-	name: String,
-	type_id: i32,
-	power: i32,
-	pp: i32,
-	accuracy: i32,
-	effect_id: i32,
-	effect_chance: i32,
-	damage_class: DamageClass,
+	pub id: i32,
+	pub name: String,
+	pub type_id: i32,
+	pub power: i32,
+	pub pp: i32,
+	pub accuracy: f64, // between 0 and 1
+	pub effect_id: i32,
+	pub effect_chance: i32,
+	pub damage_class: DamageClass,
 }
 
+// all of these pubs can't be the best way to do this.
+// I'm not sure what is though...
 #[derive(Clone)]
 pub struct PokeDesc
 {
-	id: i32,
-	hp: i32
+	pub id: i32,
+	pub type_ids: Vec<i32>,
+	pub hp: i32,
+	pub attack: i32,
+	pub defense: i32,
+	pub sp_atk: i32,
+	pub sp_def: i32,
+	pub speed: i32,
 }
 
 // Convenience function to get a CSV Reader for the given file
