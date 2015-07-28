@@ -42,42 +42,54 @@ pub trait PokePlayer
 
 pub fn battle<T1: PokePlayer, T2: PokePlayer>(p1: T1, p2: T2) -> (i32)
 {
-	let mut whose_turn = if p1.get_cur_pkn().speed > p2.get_cur_pkn().speed
-	{
-		1
-	}
-	else
-	{
-		2
-	};
-
 	loop
 	{
-		if whose_turn == 1
+		// need to figure out a better way...
+		let finished = if p1.get_cur_pkn().calc_speed() > p2.get_cur_pkn().calc_speed()
 		{
-			println!("player 1's turn");
-			play_turn(&p1, &p2);
-			whose_turn = 2;
+			play_turn(&p1, &p2)
 		}
 		else
 		{
-			println!("player 2's turn");
-			play_turn(&p2, &p1);
-			whose_turn = 1;
-		}
+			play_turn(&p2, &p1)
+		};
 
-		if p1.is_defeated()
+		if finished
 		{
-			return 2;
-		}
-		else if p2.is_defeated()
-		{
-			return 1;
+			if p1.is_defeated()
+			{
+				return 2;
+			}
+			else if p2.is_defeated()
+			{
+				return 1;
+			}
 		}
 	}
 }
 
-fn play_turn<T1: PokePlayer, T2: PokePlayer>(cur_p: &T1, oth_p: &T2) -> ()
+fn play_turn<T1: PokePlayer, T2: PokePlayer>(p1: &T1, p2: &T2) -> (bool)
+{
+	println!("player 1's turn");
+	play_action(&p1, &p2);
+
+	if p1.is_defeated() || p2.is_defeated()
+	{
+		false
+	}
+
+	println!("player 2's turn");
+	play_action(&p2, &p1);
+
+	if p1.is_defeated() || p2.is_defeated()
+	{
+		false
+	}
+
+	true
+}
+
+fn play_action<T1: PokePlayer, T2: PokePlayer>(cur_p: &T1, oth_p: &T2) -> ()
 {
 	// choose between menu options
 	match cur_p.choose_action()
@@ -87,20 +99,29 @@ fn play_turn<T1: PokePlayer, T2: PokePlayer>(cur_p: &T1, oth_p: &T2) -> ()
 				// moves can affect both attacker
 				// and attacked
 				let mv = cur_p.choose_move();
-				cur_p.get_cur_pkn().use_move(mv);
-				oth_p.get_cur_pkn().use_move_on(mv);
 
-				// replace ko'd pokemon
-				if cur_p.get_cur_pkn().is_ko()
-				{
-					let pkn = cur_p.choose_pkn();
-					cur_p.set_cur_pkn(pkn);
-				}
+				// 
+				let hit_chance = mv.desc.accuracy
+		                 * self.calc_accuracy()
+		                 / foe.calc_evasion();
 
-				if oth_p.get_cur_pkn().is_ko()
+		        if hit_chance > rand::random::<Open01<f64>>()
 				{
-					let pkn = oth_p.choose_pkn();
-					oth_p.set_cur_pkn(pkn);
+					cur_p.get_cur_pkn().use_move(&mv, &oth_p);
+					oth_p.get_cur_pkn().receive_move(&mv, &cur_p);
+
+					// replace ko'd pokemon
+					if cur_p.get_cur_pkn().is_ko()
+					{
+						let pkn = cur_p.choose_pkn();
+						cur_p.set_cur_pkn(pkn);
+					}
+
+					if oth_p.get_cur_pkn().is_ko()
+					{
+						let pkn = oth_p.choose_pkn();
+						oth_p.set_cur_pkn(pkn);
+					}
 				}
 			},
 		Action::Pokemon =>
