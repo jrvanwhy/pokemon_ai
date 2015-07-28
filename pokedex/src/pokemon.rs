@@ -1,6 +1,6 @@
 extern crate rand;
 
-use rand::{random, Closed01};
+use self::rand::{random, Closed01};
 use pokedex::{MoveDesc,PokeDesc,DamageClass};
 use std::cmp;
 
@@ -137,16 +137,14 @@ impl Pokemon
 	// follows the gen II method
 	pub fn calc_crit(&self) -> (f64)
 	{
-		let mut prob = 0.0;
-
-		match self.crit_stage
+		let prob = match self.crit_stage
 		{
-			0 => prob = 0.0625,
-			1 => prob = 0.125,
-			2 => prob = 0.25,
-			3 => prob = 0.333,
-			_ => prob = 0.50,
-		}
+			0 => 0.0625,
+			1 => 0.125,
+			2 => 0.25,
+			3 => 0.333,
+			_ => 0.50,
+		};
 
 		let Closed01(res) = random::<Closed01<f64>>();
 		if res < prob
@@ -215,10 +213,10 @@ impl Pokemon
 
 	// this implements move effects on the recipient of the attack
 	// these can be status, stat, or damage
-	pub fn receive_move(&self, mv: &Move, foe: &Pokemon) -> ()
+	pub fn receive_move(&mut self, mv: &Move, foe: &Pokemon) -> ()
 	{
 		// currently just deals damage
-		hp = cmp::max(0, hp - self.calc_damage(mv, foe));
+		self.hp = cmp::max(0, self.hp - self.calc_damage(mv, foe));
 	}
 
 	pub fn is_ko(&self) -> (bool)

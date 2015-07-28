@@ -38,7 +38,8 @@ pub struct PokeDesc
 	pub sp_atk: i32,
 	pub sp_def: i32,
 	pub speed: i32,
-	pub avail_moves: Vec<MoveDesc>
+	pub avail_moves: Vec<MoveDesc>,
+	pub name: String
 }
 
 // Convenience function to get a CSV Reader for the given file
@@ -80,16 +81,27 @@ impl Pokedex
 				Err(_) => { panic!("Could not find the {} environment variable!", CSV_DIR_ENV_VAR) }
 			};
 
+		// Output variable
+		let mut out = Pokedex { base_pokemon: Vec::new() };
+
 		// Read the pokemon.csv file.
 		for record in get_csv_rdr(csv_dir, "pokemon.csv").decode() {
-			let (id, identifier, species_id, height, weight, base_experience, order, is_default):
+			let (id, identifier, _, _, _, _, _, _):
 			    (i32, String, i32, i32, i32, i32, i32, i32) = record.unwrap();
 
-			println!("{:?}", (id, identifier, species_id, height, weight, base_experience, order, is_default));
+			out.base_pokemon.push(PokeDesc { id: id,
+			                                 type_ids: Vec::new(),
+			                                 hp: 0,
+			                                 attack: 0,
+			                                 defense: 0,
+			                                 sp_atk: 0,
+			                                 sp_def: 0,
+			                                 speed: 0,
+			                                 avail_moves: Vec::new(),
+			                                 name: identifier } );
 		}
 
-		// Temporary
-		Pokedex { base_pokemon: Vec::new() }
+		out
 	}
 
 	// Returns the pokemon description for the given Pokemon ID, if it exists.
