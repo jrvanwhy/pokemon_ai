@@ -1,5 +1,8 @@
 extern crate pokedex;
-use pokedex::Pokemon;
+extern crate rand;
+
+use pokedex::{Pokemon, Move};
+use rand::{random, Closed01};
 
 pub enum Action
 {
@@ -19,7 +22,7 @@ pub trait PokePlayer
 
 	fn set_cur_pkn(&self, Pokemon) -> ();
 
-	fn choose_move(&self) -> (i32);
+	fn choose_move(&self) -> (Move);
 
 	fn choose_pkn(&self) -> (Pokemon);
 
@@ -71,19 +74,19 @@ pub fn battle<T1: PokePlayer, T2: PokePlayer>(p1: T1, p2: T2) -> (i32)
 fn play_turn<T1: PokePlayer, T2: PokePlayer>(p1: &T1, p2: &T2) -> (bool)
 {
 	println!("player 1's turn");
-	play_action(&p1, &p2);
+	play_action(p1, p2);
 
 	if p1.is_defeated() || p2.is_defeated()
 	{
-		false
+		return false;
 	}
 
 	println!("player 2's turn");
-	play_action(&p2, &p1);
+	play_action(p2, p1);
 
 	if p1.is_defeated() || p2.is_defeated()
 	{
-		false
+		return false;
 	}
 
 	true
@@ -102,13 +105,15 @@ fn play_action<T1: PokePlayer, T2: PokePlayer>(cur_p: &T1, oth_p: &T2) -> ()
 
 				// 
 				let hit_chance = mv.desc.accuracy
-		                 * self.calc_accuracy()
-		                 / foe.calc_evasion();
+		                       * cur_p.get_cur_pkn().calc_accuracy()
+		                       / oth_p.get_cur_pkn().calc_evasion();
 
-		        if hit_chance > rand::random::<Open01<f64>>()
+		        // if hit_chance > rand::thread_rng().gen_range::<f64>(0, 1)
+		        let Closed01(res) = random::<Closed01<f64>>();
+		        if hit_chance > res
 				{
-					cur_p.get_cur_pkn().use_move(&mv, &oth_p);
-					oth_p.get_cur_pkn().receive_move(&mv, &cur_p);
+					cur_p.get_cur_pkn().use_move(&mv, &oth_p.get_cur_pkn());
+					oth_p.get_cur_pkn().receive_move(&mv, &cur_p.get_cur_pkn());
 
 					// replace ko'd pokemon
 					if cur_p.get_cur_pkn().is_ko()
