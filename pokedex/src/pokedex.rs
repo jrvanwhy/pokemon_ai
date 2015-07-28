@@ -37,6 +37,7 @@ pub struct PokeDesc
 	pub sp_atk: i32,
 	pub sp_def: i32,
 	pub speed: i32,
+	pub avail_moves: Vec<MoveDesc>
 }
 
 // Convenience function to get a CSV Reader for the given file
@@ -66,7 +67,6 @@ impl Pokedex
 	pub fn new() -> Pokedex
 	{
 		use std::env;
-		use std::fs::File;
 
 		const CSV_DIR_ENV_VAR: &'static str = "POKEDEX_DIR";
 
