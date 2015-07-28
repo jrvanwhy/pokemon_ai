@@ -84,11 +84,13 @@ impl Pokedex
 		let mut out = Pokedex { base_pokemon: Vec::new() };
 
 		// Read the pokemon.csv file. Stop once the Pokemon IDs become non-consecutive.
-		for record in get_csv_rdr(csv_dir.clone(), "pokemon.csv").decode() {
+		for record in get_csv_rdr(csv_dir.clone(), "pokemon.csv").decode()
+		{
 			let (id, identifier, _, _, _, _, _, _):
 			    (i32, String, i32, i32, i32, i32, i32, i32) = record.unwrap();
 
-			if id != out.base_pokemon.len() as i32 + 1 {
+			if id != out.base_pokemon.len() as i32 + 1
+			{
 				break;
 			}
 
@@ -105,12 +107,38 @@ impl Pokedex
 		}
 
 		// Read in the Pokemon types
-		for record in get_csv_rdr(csv_dir.clone(), "pokemon_types.csv").decode() {
+		for record in get_csv_rdr(csv_dir.clone(), "pokemon_types.csv").decode()
+		{
 			let (poke_id, type_id, _): (usize, i32, i32) = record.unwrap();
 
-			if poke_id <= out.base_pokemon.len() {
-				out.base_pokemon[poke_id-1].type_ids.push(type_id);
+			match out.base_pokemon.get_mut(poke_id - 1)
+			{
+				Some(p) => p.type_ids.push(type_id),
+				None => {}
 			}
+		}
+
+		// Read in the base stats
+		for record in get_csv_rdr(csv_dir.clone(), "pokemon_stats.csv").decode()
+		{
+			let (poke_id, stat_id, base_stat, _): (usize, i32, i32, i32) = record.unwrap();
+
+			let cur_poke = match out.base_pokemon.get_mut(poke_id - 1)
+			{
+				Some(n) => n,
+				None => { continue }
+			};
+
+			*match stat_id
+			{
+				1 => &mut cur_poke.hp,
+				2 => &mut cur_poke.attack,
+				3 => &mut cur_poke.defense,
+				4 => &mut cur_poke.sp_atk,
+				5 => &mut cur_poke.sp_def,
+				6 => &mut cur_poke.speed,
+				_ => panic!("Unknown stat ID {} found for pokemon {}!", stat_id, poke_id)
+			} = base_stat;
 		}
 
 		out
