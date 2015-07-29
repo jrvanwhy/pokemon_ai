@@ -2,57 +2,51 @@ extern crate battle_sim;
 extern crate pokedex;
 
 use battle_sim::PokePlayer;
-use pokedex::Pokemon;
-use pokedex::Move;
-use pokedex::MoveDesc;
 use battle_sim::Action;
+use battle_sim::Team;
+// use pokedex::Pokemon;
+// use pokedex::Move;
+// use pokedex::MoveDesc;
 
 use std::io;
 
 
 pub struct HumanPlayer<'a>
 {
-	pub team: Vec<Pokemon<'a>>,
+	name: String,
+	pub team: Team<'a>,
 }
 
 impl<'a> HumanPlayer<'a>
 {
-	pub fn new<'b>() -> HumanPlayer<'b>
+	pub fn new<'b>(name: String) -> HumanPlayer<'b>
 	{
-		HumanPlayer {team: Vec::new() }
+		HumanPlayer {name: name, team: Team::new()}
 	}
 }
 
 impl<'a> PokePlayer<'a> for HumanPlayer<'a>
 {
-	fn is_defeated(&self) -> (bool)
+	fn get_name(&self) -> (String)
 	{
-		let mut defeated = false;
-		for pkn in self.team.iter()
-		{
-			defeated &= pkn.is_ko();
-		}
-
-		defeated
+		self.name.clone()
 	}
 
-	fn get_cur_pkn(&mut self) -> (&mut Pokemon<'a>)
+	fn get_team(&self) -> (&Team)
 	{
-		if self.team.len() > 0
-		{
-			&mut self.team[0]
-		}
-		else
-		{
-			panic!("tried to get current pokemon when team is empty");
-		}
+		&self.team
 	}
 
-	fn choose_move(&mut self) -> (usize)
+	fn get_team_mut(&mut self) -> (&mut Team<'a>)
+	{
+		&mut self.team
+	}
+
+	fn choose_move(&self) -> (usize)
 	{
 		loop
 		{
-			for (i, mv) in self.get_cur_pkn().moves.iter().enumerate()
+			for (i, mv) in self.team.get_cur_pkn().unwrap().moves.iter().enumerate()
 			{
 				println!("\t[{}] - {}", i, mv.desc.name);
 			}
@@ -68,7 +62,7 @@ impl<'a> PokePlayer<'a> for HumanPlayer<'a>
 			    .ok()
 			    .expect("please type a number!");
 
-			if option >= self.get_cur_pkn().moves.len()
+			if option >= self.team.get_cur_pkn().unwrap().moves.len()
 			{
 				println!("please choose from the options displayed");
 			}
@@ -79,13 +73,13 @@ impl<'a> PokePlayer<'a> for HumanPlayer<'a>
 		}
 	}
 
-	fn choose_pkn(&mut self) -> ()
+	fn choose_pkn(&self) -> (usize)
 	{
 		loop
 		{
-			for (i, pkn) in self.team.iter().enumerate()
+			for (i, pkn) in self.team.get_team().iter().enumerate()
 			{
-				println!("\t[{}] - {}", i, pkn.desc.name);
+				println!("\t[{}] - {}", i, pkn);
 			}
 
 			println!("choose pokemon: ");
@@ -99,24 +93,23 @@ impl<'a> PokePlayer<'a> for HumanPlayer<'a>
 			    .ok()
 			    .expect("please type a number!");
 
-			if option >= self.team.len()
+			if option >= self.team.get_team().len()
 			{
 				println!("please choose from the options displayed");
 			}
 			else
 			{
-				self.team.swap(0, option);
-				break;
+				return option;
 			}
 		}
 	}
 
-	fn choose_action(&mut self) -> (Action)
+	fn choose_action(&self) -> (Action)
 	{
 		loop
 		{
-			let cur_pkn = self.get_cur_pkn();
-			println!("cur pkn: {}; hp: {} / {}", cur_pkn.desc.name, cur_pkn.hp, cur_pkn.desc.hp);
+			let cur_pkn = self.team.get_cur_pkn().unwrap();
+			println!("cur pkn:\n{}", cur_pkn);
 			println!("\t[0] - Attack");
 			println!("\t[1] - Pokemon");
 			println!("\t[2] - Item");
@@ -142,30 +135,30 @@ impl<'a> PokePlayer<'a> for HumanPlayer<'a>
 		}
 	}
 
-	fn get_move(&mut self, ind: usize) -> (Move)
-	{
-		match self.get_cur_pkn().moves.get(ind)
-		{
-			Some(mv) => mv.clone(),
-			None => panic!("I guess I should have done better error checking, but I'm tired...")
-		}
-	}
+	// fn get_move(&mut self, ind: usize) -> (Move)
+	// {
+	// 	match self.get_cur_pkn().moves.get(ind)
+	// 	{
+	// 		Some(mv) => mv.clone(),
+	// 		None => panic!("I guess I should have done better error checking, but I'm tired...")
+	// 	}
+	// }
 
-	fn get_move_desc(&mut self, ind: usize) -> (MoveDesc)
-	{
-		match self.get_cur_pkn().moves.get(ind)
-		{
-			Some(mv) => mv.desc.clone(),
-			None => panic!("I guess I should have done better error checking, but I'm tired...")
-		}
-	}
+	// fn get_move_desc(&mut self, ind: usize) -> (MoveDesc)
+	// {
+	// 	match self.get_cur_pkn().moves.get(ind)
+	// 	{
+	// 		Some(mv) => mv.desc.clone(),
+	// 		None => panic!("I guess I should have done better error checking, but I'm tired...")
+	// 	}
+	// }
 
-	fn set_move_pp(&mut self, ind: usize) -> ()
-	{
-		match self.get_cur_pkn().moves.get_mut(ind)
-		{
-			Some(mv) => mv.pp -= 1,
-			None => panic!("move not found. this is not good.")
-		}
-	}
+	// fn set_move_pp(&mut self, ind: usize) -> ()
+	// {
+	// 	match self.get_cur_pkn().moves.get_mut(ind)
+	// 	{
+	// 		Some(mv) => mv.pp -= 1,
+	// 		None => panic!("move not found. this is not good.")
+	// 	}
+	// }
 }
