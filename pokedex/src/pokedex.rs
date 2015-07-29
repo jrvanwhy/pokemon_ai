@@ -177,16 +177,19 @@ impl Pokedex
 				break
 			}
 
-			out.base_pokemon.push(PokeDesc { id: id,
-			                                 type_ids: Vec::new(),
-			                                 hp: 0,
-			                                 attack: 0,
-			                                 defense: 0,
-			                                 sp_atk: 0,
-			                                 sp_def: 0,
-			                                 speed: 0,
-			                                 avail_moves: Vec::new(),
-			                                 name: identifier } );
+			out.base_pokemon.push(PokeDesc
+			{
+				id: id,
+				type_ids: Vec::new(),
+				hp: 0,
+				attack: 0,
+				defense: 0,
+				sp_atk: 0,
+				sp_def: 0,
+				speed: 0,
+				avail_moves: Vec::new(),
+				name: identifier
+			});
 		}
 
 		// Read in the Pokemon types
