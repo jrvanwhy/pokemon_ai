@@ -224,6 +224,20 @@ impl Pokedex
 			} = base_stat;
 		}
 
+		// Match Pokemon with their moves.
+		for record in get_csv_rdr(path.clone() + "pokemon_moves.csv").decode()
+		{
+			let (poke_id, _, move_id, _, _, _): (usize, i32, usize, i32, i32, Option<i32>) = record.unwrap();
+
+			// Ignore moves for high-ID pokemon.
+			if poke_id >= out.base_pokemon.len()
+			{
+				continue
+			}
+
+			out.base_pokemon[poke_id - 1].avail_moves.push(moves.get(move_id - 1).expect("Invalid move read from pokemon_moves.csv").clone());
+		}
+
 		out
 	}
 
