@@ -41,6 +41,12 @@ pub struct PokeDesc
 	pub name: String
 }
 
+impl PokeDesc {
+	pub fn get_move_desc(&self, id: i32) -> Option<&MoveDesc> {
+		self.avail_moves.iter().filter(|m| m.id == id).next()
+	}
+}
+
 // Convenience function to get a CSV Reader for the given file
 fn get_csv_rdr(path: String) -> csv::Reader<File> {
 	use std::error::Error;
@@ -66,18 +72,14 @@ impl Pokedex
 	// configuration file and do all necessary Pokemon parsing.
 	pub fn new(path: String) -> Pokedex
 	{
-		// use std::env;
+		// This will contain all the move descriptions
+		let mut moves = Vec::<MoveDesc>::new();
 
-		// const CSV_DIR_ENV_VAR: &'static str = "POKEDEX_DIR";
-
-		// // Read the environment variable which has the location of the
-		// // configuration and CSV file directory
-		// let csv_dir =
-		// 	match env::var(CSV_DIR_ENV_VAR)
-		// 	{
-		// 		Ok(path) => path + "/",
-		// 		Err(_) => { panic!("Could not find the {} environment variable!", CSV_DIR_ENV_VAR) }
-		// 	};
+		// Read in move.csv
+		//for record in get_csv_rdr(path.clone() + "moves.csv").decode()
+		{
+			//let (id, identifier, gen_id, type_id, power, pp, accuracy, priority, target_id, damage_class_id, effect_id, effect_chance
+		}
 
 		// Output variable
 		let mut out = Pokedex { base_pokemon: Vec::new() };
