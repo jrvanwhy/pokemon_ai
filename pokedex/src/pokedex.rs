@@ -289,7 +289,7 @@ impl Pokedex
 	// Otherwise returns None
 	pub fn get_poke_desc(&self, id: usize) -> Option<&PokeDesc>
 	{
-		self.base_pokemon.get(id-1)
+		self.base_pokemon.get(id)
 	}
 
 	// Returns the type efficacy for the given attacker and defender types
