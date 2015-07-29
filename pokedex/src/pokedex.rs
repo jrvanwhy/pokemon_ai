@@ -10,6 +10,20 @@ pub enum DamageClass
 	Special
 }
 
+impl DamageClass
+{
+	pub fn new(id: i32) -> Option<DamageClass>
+	{
+		match id
+		{
+			1 => Some(DamageClass::Status),
+			2 => Some(DamageClass::Physical),
+			3 => Some(DamageClass::Special),
+			_ => None
+		}
+	}
+}
+
 #[derive(Clone,Debug)]
 pub struct MoveDesc
 {
@@ -48,7 +62,7 @@ impl PokeDesc {
 }
 
 // Convenience function to get a CSV Reader for the given file
-fn get_csv_rdr(path: String) -> csv::Reader<File> {
+pub fn get_csv_rdr(path: String) -> csv::Reader<File> {
 	use std::error::Error;
 
 	match csv::Reader::from_file(&path)
@@ -76,9 +90,28 @@ impl Pokedex
 		let mut moves = Vec::<MoveDesc>::new();
 
 		// Read in move.csv
-		//for record in get_csv_rdr(path.clone() + "moves.csv").decode()
+		for record in get_csv_rdr(path.clone() + "moves.csv").decode()
 		{
-			//let (id, identifier, gen_id, type_id, power, pp, accuracy, priority, target_id, damage_class_id, effect_id, effect_chance
+			let (id, identifier, _, type_id, power, pp, accuracy, _, _, damage_class_id, effect_id, effect_chance):
+			    (i32, String, i32, i32, Option<i32>, i32, Option<i32>, i32, i32, i32, i32, Option<i32>) = record.unwrap();
+
+			if id != moves.len() as i32 + 1
+			{
+				panic!("Unexpected move ID {} read. Expected ID {}.", id, moves.len() + 1);
+			}
+
+			moves.push(MoveDesc
+			{
+				id: id,
+				name: identifier,
+				type_id: type_id,
+				power: power.unwrap_or(0),
+				pp: pp,
+				accuracy: (accuracy.unwrap_or(0) as f64) / 100.,
+				effect_id: effect_id,
+				effect_chance: effect_chance.unwrap_or(0),
+				damage_class: DamageClass::new(damage_class_id).expect("Invalid damage class in moves.csv")
+			});
 		}
 
 		// Output variable
