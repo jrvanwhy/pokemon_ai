@@ -188,16 +188,16 @@ impl<'a> Pokemon<'a>
 	}
 
 	// 
-	pub fn calc_damage(&self, mv: &Move, foe: &Pokemon) -> (i32)
+	pub fn calc_damage(&self, mv: &MoveDesc, foe: &Pokemon) -> (i32)
 	{
 		// status moves don't do damage (hopefully...)
-		if mv.desc.damage_class == DamageClass::Status
+		if mv.damage_class == DamageClass::Status
 		{
 			return 0;
 		}
 
 		// if move is same type as pokemon, does 1.5 damage
-		let mut modifier = if foe.desc.type_ids.contains(&mv.desc.type_id)
+		let mut modifier = if foe.desc.type_ids.contains(&mv.type_id)
 		{
 			1.50
 		}
@@ -206,7 +206,7 @@ impl<'a> Pokemon<'a>
 			1.0
 		};
 
-		modifier *= type_efficacy(&mv.desc.type_id, &self.desc.type_ids);
+		modifier *= type_efficacy(&mv.type_id, &self.desc.type_ids);
 		modifier *= self.calc_crit();
 
 		// random modifier from 0.85 to 1.0
@@ -216,14 +216,14 @@ impl<'a> Pokemon<'a>
 		let mut damage = (2 * foe.level + 10) as f64 / 250.0;
 
 		// different damage classes use different stats
-		damage *= match mv.desc.damage_class
+		damage *= match mv.damage_class
 		{
 			DamageClass::Physical => foe.calc_attack() as f64 / self.calc_defense() as f64,
 			DamageClass::Special => foe.calc_sp_atk() as f64 / self.calc_sp_def() as f64,
 			_ => panic!("tried to deal damage with status move. this should never happen.")
 		};
 
-		damage *= mv.desc.power as f64;
+		damage *= mv.power as f64;
 		damage += 2.0;
 		damage *= modifier;
 
@@ -234,11 +234,11 @@ impl<'a> Pokemon<'a>
 	// these include status changes and stat modification
 	pub fn use_move(&self, mv: &MoveDesc, _foe: &mut Pokemon) -> ()
 	{
-		// match mv.desc.damage_class
-		// {
-		// 	DamageClass::Status => println!("status moves are not implemented yet for the user. sorry."),
-		// 	_ => println!("physical and special moves are not implemented yet for the user. waiting on move data...")
-		// }
+		match mv.damage_class
+		{
+			DamageClass::Status => println!("status moves are not implemented yet for the user. sorry."),
+			_ => println!("physical and special moves are not implemented yet for the user. waiting on move data...")
+		}
 	}
 
 	// this implements move effects on the recipient of the attack
@@ -246,7 +246,7 @@ impl<'a> Pokemon<'a>
 	pub fn receive_move(&mut self, mv: &MoveDesc, foe: &mut Pokemon) -> ()
 	{
 		// currently just deals damage
-		// self.hp = cmp::max(0, self.hp - self.calc_damage(mv, foe));
+		self.hp = cmp::max(0, self.hp - self.calc_damage(mv, foe));
 
 	}
 
