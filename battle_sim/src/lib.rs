@@ -21,7 +21,7 @@ pub trait PokePlayer<'a>
 
 	fn choose_pkn(&mut self) -> ();
 
-	fn choose_action(&self) -> (Action);
+	fn choose_action(&mut self) -> (Action);
 
 	fn get_move(&mut self, usize) -> (Move);
 
