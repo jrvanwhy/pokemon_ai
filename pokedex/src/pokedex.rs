@@ -1,6 +1,8 @@
 extern crate csv;
+extern crate sparse_vec;
 
 use std::fs::File;
+use self::sparse_vec::SparseVec;
 
 #[derive(Clone,PartialEq,Debug)]
 pub enum DamageClass
@@ -117,7 +119,7 @@ pub fn get_csv_rdr(path: String) -> csv::Reader<File>
 pub struct Pokedex
 {
 	// Vector of base-stat descriptions.
-	base_pokemon: Vec<PokeDesc>,
+	base_pokemon: SparseVec<PokeDesc>,
 
 	// Vectors of type efficacies
 	type_efficacies: Vec<Vec<f64>>
@@ -130,7 +132,10 @@ impl Pokedex
 	pub fn new(path: String) -> Pokedex
 	{
 		// This will contain all the move descriptions
-		let mut moves = Vec::<MoveDesc>::new();
+		let mut moves = SparseVec::<MoveDesc>::new();
+
+		// Maximum ID, above which we reject new Pokemon or moves.
+		let max_id = 10000;
 
 		// Read in move.csv until a non-consecutive move ID is read
 		for record in get_csv_rdr(path.clone() + "moves.csv").decode()
@@ -138,12 +143,12 @@ impl Pokedex
 			let (id, identifier, _, type_id, power, pp, accuracy, _, _, damage_class_id, effect_id, effect_chance):
 			    (i32, String, i32, i32, Option<i32>, Option<i32>, Option<i32>, i32, i32, i32, i32, Option<i32>) = record.unwrap();
 
-			if id != moves.len() as i32 + 1
+			if id > max_id
 			{
 				break
 			}
 
-			moves.push(MoveDesc
+			moves.push_at(id as usize, MoveDesc
 			{
 				id: id,
 				name: identifier,
@@ -164,25 +169,25 @@ impl Pokedex
 		{
 			let (move_id, stat_id, change): (usize, i32, i32) = record.unwrap();
 
-			match StatMod::new(stat_id, change)
+			match (moves.get_mut(move_id), StatMod::new(stat_id, change))
 			{
-				Some(m) =>
+				(Some(m), Some(s)) =>
+				{
+					if change > 0
 					{
-						if change > 0
-						{
-							moves[move_id - 1].user_stat_effects.push(m);
-						}
-						else
-						{
-							moves[move_id - 1].recip_stat_effects.push(m);
-						}
+						m.user_stat_effects.push(s);
 					}
-				None => {}
+					else
+					{
+						m.recip_stat_effects.push(s);
+					}
+				},
+				_ => {}
 			}
 		}
 
 		// Output variable
-		let mut out = Pokedex { base_pokemon: Vec::new(), type_efficacies: Vec::new() };
+		let mut out = Pokedex { base_pokemon: SparseVec::new(), type_efficacies: Vec::new() };
 
 		// Read the pokemon.csv file. Stop once the Pokemon IDs become non-consecutive.
 		for record in get_csv_rdr(path.clone() + "pokemon.csv").decode()
@@ -190,12 +195,12 @@ impl Pokedex
 			let (id, identifier, _, _, _, _, _, _):
 			    (i32, String, i32, i32, i32, i32, i32, i32) = record.unwrap();
 
-			if id != out.base_pokemon.len() as i32 + 1
+			if id > max_id
 			{
 				break
 			}
 
-			out.base_pokemon.push(PokeDesc
+			out.base_pokemon.push_at(id as usize, PokeDesc
 			{
 				id: id,
 				type_ids: Vec::new(),
@@ -215,7 +220,7 @@ impl Pokedex
 		{
 			let (poke_id, type_id, _): (usize, i32, i32) = record.unwrap();
 
-			match out.base_pokemon.get_mut(poke_id - 1)
+			match out.base_pokemon.get_mut(poke_id)
 			{
 				Some(p) => p.type_ids.push(type_id),
 				None => {}
@@ -227,7 +232,7 @@ impl Pokedex
 		{
 			let (poke_id, stat_id, base_stat, _): (usize, i32, i32, i32) = record.unwrap();
 
-			let cur_poke = match out.base_pokemon.get_mut(poke_id - 1)
+			let cur_poke = match out.base_pokemon.get_mut(poke_id)
 			{
 				Some(n) => n,
 				None => { continue }
@@ -250,13 +255,11 @@ impl Pokedex
 		{
 			let (poke_id, _, move_id, _, _, _): (usize, i32, usize, i32, i32, Option<i32>) = record.unwrap();
 
-			// Ignore moves for high-ID pokemon.
-			if poke_id >= out.base_pokemon.len()
+			match (out.base_pokemon.get_mut(poke_id), moves.get_mut(move_id))
 			{
-				continue
+				(Some(p), Some(m)) => p.avail_moves.push(m.clone()),
+				_ => {}
 			}
-
-			out.base_pokemon[poke_id - 1].avail_moves.push(moves.get(move_id - 1).expect("Invalid move read from pokemon_moves.csv").clone());
 		}
 
 		// Read in type efficacies
