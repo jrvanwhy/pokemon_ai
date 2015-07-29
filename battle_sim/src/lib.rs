@@ -12,34 +12,38 @@ pub enum Action
 	Item
 }
 
-
-pub trait PokePlayer
+pub trait PokePlayer<'a>
 {
-	// fn get_team(&self) -> (Vec<Pokemon>);
-
 	fn is_defeated(&self) -> (bool);
 
-	fn get_cur_pkn(&self) -> (Pokemon);
+	fn get_cur_pkn(&mut self) -> (&mut Pokemon<'a>);
 
-	fn choose_move(&self) -> (Move);
+	fn choose_move(&mut self) -> (Move<'a>);
 
-	fn choose_pkn(&self) -> ();
+	fn choose_pkn(&mut self) -> ();
 
 	fn choose_action(&self) -> (Action);
 }
 
-struct HumanPlayer
+pub struct HumanPlayer<'a>
 {
-	team: Vec<Pokemon>,
-	name: str
+	pub team: Vec<Pokemon<'a>>,
 }
 
-impl PokePlayer for HumanPlayer
+impl<'a> HumanPlayer<'a>
+{
+	pub fn new<'b>() -> HumanPlayer<'b>
+	{
+		HumanPlayer {team: Vec::new() }
+	}
+}
+
+impl<'a> PokePlayer<'a> for HumanPlayer<'a>
 {
 	fn is_defeated(&self) -> (bool)
 	{
 		let mut defeated = false;
-		for pkn in self.team
+		for pkn in self.team.iter()
 		{
 			defeated &= pkn.is_ko();
 		}
@@ -47,11 +51,11 @@ impl PokePlayer for HumanPlayer
 		defeated
 	}
 
-	fn get_cur_pkn(&self) -> (Pokemon)
+	fn get_cur_pkn(&mut self) -> (&mut Pokemon<'a>)
 	{
 		if self.team.len() > 0
 		{
-			self.team[0]
+			&mut self.team[0]
 		}
 		else
 		{
@@ -59,16 +63,78 @@ impl PokePlayer for HumanPlayer
 		}
 	}
 
-	fn choose_move(&self) -> Move
+	fn choose_move(&mut self) -> (Move<'a>)
 	{
 		loop
 		{
-			for (i, mv) in self.get_cur_pkn().moves().enumerate()
+			for (i, mv) in self.get_cur_pkn().moves.iter().enumerate()
 			{
 				println!("\t[{}] - {}", i, mv.desc.name);
 			}
 
-			print!("choose move: ");
+			println!("choose move: ");
+
+			let mut option = String::new();
+			io::stdin().read_line(&mut option)
+			    .ok()
+			    .expect("failed to read line");
+
+			let option: usize = option.trim().parse()
+			    .ok()
+			    .expect("please type a number!");
+
+			if option >= self.get_cur_pkn().moves.len()
+			{
+				println!("please choose from the options displayed");
+			}
+			else
+			{
+				return self.get_cur_pkn().moves[option].clone();
+			}
+		}
+	}
+
+	fn choose_pkn(&mut self) -> ()
+	{
+		loop
+		{
+			for (i, pkn) in self.team.iter().enumerate()
+			{
+				println!("\t[{}] - {}", i, pkn.desc.name);
+			}
+
+			println!("choose pokemon: ");
+
+			let mut option = String::new();
+			io::stdin().read_line(&mut option)
+			    .ok()
+			    .expect("failed to read line");
+
+			let option: usize = option.trim().parse()
+			    .ok()
+			    .expect("please type a number!");
+
+			if option >= self.team.len()
+			{
+				println!("please choose from the options displayed");
+			}
+			else
+			{
+				self.team.swap(0, option);
+				break;
+			}
+		}
+	}
+
+	fn choose_action(&self) -> (Action)
+	{
+		loop
+		{
+			println!("\t[0] - Attack");
+			println!("\t[1] - Pokemon");
+			println!("\t[2] - Item");
+
+			println!("choose action: ");
 
 			let mut option = String::new();
 			io::stdin().read_line(&mut option)
@@ -79,32 +145,29 @@ impl PokePlayer for HumanPlayer
 			    .ok()
 			    .expect("please type a number!");
 
-			if option >= self.get_cur_pkn().moves().len()
+			match option
 			{
-				println!("please choose from the options displayed");
-			}
-			else
-			{
-				return self.get_cur_pkn.moves()[option];
+				0 => return Action::Attack,
+				1 => return Action::Pokemon,
+				2 => return Action::Item,
+				_ => println!("please choose from the options displayed")
 			}
 		}
-		
 	}
-
 }
 
-pub fn battle<T1: PokePlayer, T2: PokePlayer>(p1: T1, p2: T2) -> (i32)
+pub fn battle<'a, T1: PokePlayer<'a>, T2: PokePlayer<'a>>(p1: &mut T1, p2: &mut T2) -> (i32)
 {
 	loop
 	{
 		// need to figure out a better way...
 		let finished = if p1.get_cur_pkn().calc_speed() > p2.get_cur_pkn().calc_speed()
 		{
-			play_turn(&p1, &p2)
+			play_turn(p1, p2)
 		}
 		else
 		{
-			play_turn(&p2, &p1)
+			play_turn(p2, p1)
 		};
 
 		if finished
@@ -121,7 +184,7 @@ pub fn battle<T1: PokePlayer, T2: PokePlayer>(p1: T1, p2: T2) -> (i32)
 	}
 }
 
-fn play_turn<T1: PokePlayer, T2: PokePlayer>(p1: &T1, p2: &T2) -> (bool)
+fn play_turn<'a, T1: PokePlayer<'a>, T2: PokePlayer<'a>>(p1: &mut T1, p2: &mut T2) -> (bool)
 {
 	println!("player 1's turn");
 	play_action(p1, p2);
@@ -142,7 +205,7 @@ fn play_turn<T1: PokePlayer, T2: PokePlayer>(p1: &T1, p2: &T2) -> (bool)
 	true
 }
 
-fn play_action<T1: PokePlayer, T2: PokePlayer>(cur_p: &T1, oth_p: &T2) -> ()
+fn play_action<'a, T1: PokePlayer<'a>, T2: PokePlayer<'a>>(cur_p: &mut T1, oth_p: &mut T2) -> ()
 {
 	// choose between menu options
 	match cur_p.choose_action()
@@ -153,11 +216,11 @@ fn play_action<T1: PokePlayer, T2: PokePlayer>(cur_p: &T1, oth_p: &T2) -> ()
 				// and attacked
 				let mv = cur_p.choose_move();
 
-				// 
 				let hit_chance = mv.desc.accuracy
 				               * cur_p.get_cur_pkn().calc_accuracy()
 				               / oth_p.get_cur_pkn().calc_evasion();
 
+				// hit with prob hit_chance
 				let Closed01(res) = random::<Closed01<f64>>();
 				if hit_chance > res
 				{
