@@ -2,35 +2,16 @@ extern crate pokedex;
 extern crate battle_sim;
 extern crate toml;
 
+mod human_player;
 // use std::fs::File;
 use std::env;
 
 use pokedex::Pokedex;
 use pokedex::Pokemon;
 use pokedex::Move;
-use battle_sim::HumanPlayer;
+use human_player::HumanPlayer;
 
-// fn load_player_config(String config_path) -> (HumanPlayer)
-// {
-// 	let mut config_file = try!(File::open(config_path));
-// 	let mut config_contents = String::new();
-
-// 	try!(config_file.read_to_string(&mut config_contents));
-
-// 	let mut parser = toml::Parser::new(&config_contents);
-// 	let toml_val = match parser.parse()
-// 	{
-// 		Some(toml_val) => toml_val,
-// 		None => panic!("failed to parse TOML configuration");
-// 	}
-
-// 	let mut decoder = toml::Deocder::new(toml_val);
-// 	let config = try!(HumanPlayer::decode(&mut decoder));
-
-// 	config
-// }
-
-fn configure_player<'a>(dex: &'a Pokedex, player: &mut HumanPlayer<'a>, team: Vec<(usize, Vec<usize>)>)
+fn configure_player<'a>(dex: &'a Pokedex, player: &mut HumanPlayer<'a>, team: Vec<(usize, Vec<i32>)>)
 {
 	for (id, moves) in team
 	{
@@ -52,7 +33,7 @@ fn configure_player<'a>(dex: &'a Pokedex, player: &mut HumanPlayer<'a>, team: Ve
 				None => panic!("failed to load move {} from pokedex", move_id)
 			};
 
-			let mut mv = Move::new(&move_desc);
+			let mv = Move::new(&move_desc);
 
 			pkn.add_move(mv);
 		}
