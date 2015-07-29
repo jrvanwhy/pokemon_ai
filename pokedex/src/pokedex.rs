@@ -117,6 +117,9 @@ pub struct Pokedex
 {
 	// Vector of base-stat descriptions.
 	base_pokemon: Vec<PokeDesc>,
+
+	// Vectors of type efficacies
+	type_efficacies: Vec<Vec<f64>>
 }
 
 impl Pokedex
@@ -167,7 +170,7 @@ impl Pokedex
 		}
 
 		// Output variable
-		let mut out = Pokedex { base_pokemon: Vec::new() };
+		let mut out = Pokedex { base_pokemon: Vec::new(), type_efficacies: Vec::new() };
 
 		// Read the pokemon.csv file. Stop once the Pokemon IDs become non-consecutive.
 		for record in get_csv_rdr(path.clone() + "pokemon.csv").decode()
@@ -244,6 +247,26 @@ impl Pokedex
 			out.base_pokemon[poke_id - 1].avail_moves.push(moves.get(move_id - 1).expect("Invalid move read from pokemon_moves.csv").clone());
 		}
 
+		// Read in type efficacies
+		for record in get_csv_rdr(path.clone() + "type_efficacy.csv").decode()
+		{
+			let (damage_type_id, target_type_id, damage_factor): (usize, usize, f64) = record.unwrap();
+
+			// Extend the vectors until they're the right size
+			while out.type_efficacies.len() < damage_type_id
+			{
+				out.type_efficacies.push(Vec::new());
+			}
+
+			while out.type_efficacies[damage_type_id - 1].len() < target_type_id
+			{
+				out.type_efficacies[damage_type_id - 1].push(0.);
+			}
+
+			// Store the type efficacy in the (newly-created?) spot
+			out.type_efficacies[damage_type_id-1][target_type_id-1] = damage_factor / 100.;
+		}
+
 		out
 	}
 
@@ -252,5 +275,22 @@ impl Pokedex
 	pub fn get_poke_desc(&self, id: usize) -> Option<&PokeDesc>
 	{
 		self.base_pokemon.get(id-1)
+	}
+
+	// Returns the type efficacy for the given attacker and defender types
+	pub fn get_type_efficacy(&self, attacker_type: i32, defender_type: i32) -> Option<f64>
+	{
+		match self.type_efficacies.get(attacker_type as usize - 1)
+		{
+			Some(v) =>
+			{
+				match v.get(defender_type as usize - 1)
+				{
+					Some(&n) => Some(n),
+					None => None
+				}
+			},
+			None => None
+		}
 	}
 }
