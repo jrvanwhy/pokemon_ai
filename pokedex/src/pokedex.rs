@@ -71,7 +71,8 @@ pub struct MoveDesc
 	pub effect_id: i32,
 	pub effect_chance: i32,
 	pub damage_class: DamageClass,
-	pub status_effects: Vec<StatMod>
+	pub user_stat_effects: Vec<StatMod>,
+	pub recip_stat_effects: Vec<StatMod>,
 }
 
 // all of these pubs can't be the best way to do this.
@@ -150,18 +151,29 @@ impl Pokedex
 				effect_id: effect_id,
 				effect_chance: effect_chance.unwrap_or(0),
 				damage_class: DamageClass::new(damage_class_id).expect("Invalid damage class in moves.csv"),
-				status_effects: Vec::new()
+				user_stat_effects: Vec::new(),
+				recip_stat_effects: Vec::new(),
 			});
 		}
 
-		// Read in the move status effects
+		// Read in the move stat effects
 		for record in get_csv_rdr(path.clone() + "move_meta_stat_changes.csv").decode()
 		{
 			let (move_id, stat_id, change): (usize, i32, i32) = record.unwrap();
 
 			match StatMod::new(stat_id, change)
 			{
-				Some(m) => moves[move_id - 1].status_effects.push(m),
+				Some(m) =>
+					{
+						if change > 0
+						{
+							moves[move_id - 1].user_stat_effects.push(m);
+						}
+						else
+						{
+							moves[move_id - 1].recip_stat_effects.push(m);
+						}
+					}
 				None => {}
 			}
 		}
