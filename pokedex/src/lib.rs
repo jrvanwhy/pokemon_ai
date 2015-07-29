@@ -7,4 +7,5 @@ pub use pokedex::Pokedex;
 pub use pokemon::Pokemon;
 pub use pokemon::Move;
 pub use pokedex::MoveDesc;
+pub use pokedex::PokeDesc;
 pub use pokedex::Accuracy;

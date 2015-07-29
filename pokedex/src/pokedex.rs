@@ -91,14 +91,17 @@ pub struct PokeDesc
 	pub name: String
 }
 
-impl PokeDesc {
-	pub fn get_move_desc(&self, id: i32) -> Option<&MoveDesc> {
+impl PokeDesc
+{
+	pub fn get_move_desc(&self, id: i32) -> Option<&MoveDesc>
+	{
 		self.avail_moves.iter().filter(|m| m.id == id).next()
 	}
 }
 
 // Convenience function to get a CSV Reader for the given file
-pub fn get_csv_rdr(path: String) -> csv::Reader<File> {
+pub fn get_csv_rdr(path: String) -> csv::Reader<File>
+{
 	use std::error::Error;
 
 	match csv::Reader::from_file(&path)
