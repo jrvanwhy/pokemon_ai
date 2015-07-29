@@ -1,9 +1,8 @@
 extern crate pokedex;
 extern crate rand;
 
-use pokedex::{Pokemon, Move};
-use rand::{random, Closed01};
-use std::io;
+use pokedex::{Pokemon, Move, MoveDesc, Accuracy};
+use rand::{random, Open01};
 
 pub enum Action
 {
@@ -18,142 +17,17 @@ pub trait PokePlayer<'a>
 
 	fn get_cur_pkn(&mut self) -> (&mut Pokemon<'a>);
 
-	fn choose_move(&mut self) -> (Move<'a>);
+	fn choose_move(&mut self) -> (usize);
 
 	fn choose_pkn(&mut self) -> ();
 
 	fn choose_action(&self) -> (Action);
-}
 
-pub struct HumanPlayer<'a>
-{
-	pub team: Vec<Pokemon<'a>>,
-}
+	fn get_move(&mut self, usize) -> (Move);
 
-impl<'a> HumanPlayer<'a>
-{
-	pub fn new<'b>() -> HumanPlayer<'b>
-	{
-		HumanPlayer {team: Vec::new() }
-	}
-}
+	fn get_move_desc(&mut self, usize) -> (MoveDesc);
 
-impl<'a> PokePlayer<'a> for HumanPlayer<'a>
-{
-	fn is_defeated(&self) -> (bool)
-	{
-		let mut defeated = false;
-		for pkn in self.team.iter()
-		{
-			defeated &= pkn.is_ko();
-		}
-
-		defeated
-	}
-
-	fn get_cur_pkn(&mut self) -> (&mut Pokemon<'a>)
-	{
-		if self.team.len() > 0
-		{
-			&mut self.team[0]
-		}
-		else
-		{
-			panic!("tried to get current pokemon when team is empty");
-		}
-	}
-
-	fn choose_move(&mut self) -> (Move<'a>)
-	{
-		loop
-		{
-			for (i, mv) in self.get_cur_pkn().moves.iter().enumerate()
-			{
-				println!("\t[{}] - {}", i, mv.desc.name);
-			}
-
-			println!("choose move: ");
-
-			let mut option = String::new();
-			io::stdin().read_line(&mut option)
-			    .ok()
-			    .expect("failed to read line");
-
-			let option: usize = option.trim().parse()
-			    .ok()
-			    .expect("please type a number!");
-
-			if option >= self.get_cur_pkn().moves.len()
-			{
-				println!("please choose from the options displayed");
-			}
-			else
-			{
-				return self.get_cur_pkn().moves[option].clone();
-			}
-		}
-	}
-
-	fn choose_pkn(&mut self) -> ()
-	{
-		loop
-		{
-			for (i, pkn) in self.team.iter().enumerate()
-			{
-				println!("\t[{}] - {}", i, pkn.desc.name);
-			}
-
-			println!("choose pokemon: ");
-
-			let mut option = String::new();
-			io::stdin().read_line(&mut option)
-			    .ok()
-			    .expect("failed to read line");
-
-			let option: usize = option.trim().parse()
-			    .ok()
-			    .expect("please type a number!");
-
-			if option >= self.team.len()
-			{
-				println!("please choose from the options displayed");
-			}
-			else
-			{
-				self.team.swap(0, option);
-				break;
-			}
-		}
-	}
-
-	fn choose_action(&self) -> (Action)
-	{
-		loop
-		{
-			println!("\t[0] - Attack");
-			println!("\t[1] - Pokemon");
-			println!("\t[2] - Item");
-
-			println!("choose action: ");
-
-			let mut option = String::new();
-			io::stdin().read_line(&mut option)
-			    .ok()
-			    .expect("failed to read line");
-
-			let option: u32 = option.trim().parse()
-			    .ok()
-			    .expect("please type a number!");
-
-			match option
-			{
-				0 => return Action::Attack,
-				1 => return Action::Pokemon,
-				2 => return Action::Item,
-				_ => println!("please choose from the options displayed")
-			}
-		}
-	}
+	fn set_move_pp(&mut self, usize) -> ();
 }
 
 pub fn battle<'a, T1: PokePlayer<'a>, T2: PokePlayer<'a>>(p1: &mut T1, p2: &mut T2) -> (i32)
@@ -214,29 +88,42 @@ fn play_action<'a, T1: PokePlayer<'a>, T2: PokePlayer<'a>>(cur_p: &mut T1, oth_p
 			{
 				// moves can affect both attacker
 				// and attacked
-				let mv = cur_p.choose_move();
+				let mv_ind = cur_p.choose_move();
 
-				let hit_chance = mv.desc.accuracy
-				               * cur_p.get_cur_pkn().calc_accuracy()
-				               / oth_p.get_cur_pkn().calc_evasion();
-
-				// hit with prob hit_chance
-				let Closed01(res) = random::<Closed01<f64>>();
-				if hit_chance > res
+				if cur_p.get_move(mv_ind).pp > 0
 				{
-					cur_p.get_cur_pkn().use_move(&mv, &oth_p.get_cur_pkn());
-					oth_p.get_cur_pkn().receive_move(&mv, &cur_p.get_cur_pkn());
-
-					// replace ko'd pokemon
-					if cur_p.get_cur_pkn().is_ko()
+					let hit_chance = match cur_p.get_move_desc(mv_ind).accuracy
 					{
-						cur_p.choose_pkn();
-					}
+						Accuracy::Finite(val) => val * cur_p.get_cur_pkn().calc_accuracy()
+					               / oth_p.get_cur_pkn().calc_evasion(),
+					    Accuracy::Infinite => 1.0
+					};
 
-					if oth_p.get_cur_pkn().is_ko()
+					// hit with prob hit_chance
+					let Open01(res) = random::<Open01<f64>>();
+					if hit_chance > res
 					{
-						oth_p.choose_pkn();
+						let mv = cur_p.get_move_desc(mv_ind);
+						cur_p.get_cur_pkn().use_move(&mv, &mut oth_p.get_cur_pkn());
+						oth_p.get_cur_pkn().receive_move(&mv, &mut cur_p.get_cur_pkn());
+
+						cur_p.set_move_pp(mv_ind);
+
+						// replace ko'd pokemon
+						if cur_p.get_cur_pkn().is_ko()
+						{
+							cur_p.choose_pkn();
+						}
+
+						if oth_p.get_cur_pkn().is_ko()
+						{
+							oth_p.choose_pkn();
+						}
 					}
+				}
+				else
+				{
+					println!("move is out of power points");
 				}
 			},
 		Action::Pokemon =>
@@ -245,7 +132,7 @@ fn play_action<'a, T1: PokePlayer<'a>, T2: PokePlayer<'a>>(cur_p: &mut T1, oth_p
 			},
 		Action::Item =>
 			{
-				println!("No items, sorry...");
+				println!("No items, sorry... Maybe later.");
 				play_turn(cur_p, oth_p);
 			}
 	}
