@@ -42,14 +42,13 @@ pub struct PokeDesc
 }
 
 // Convenience function to get a CSV Reader for the given file
-fn get_csv_rdr(csv_dir: String, filename: &str) -> csv::Reader<File> {
+fn get_csv_rdr(path: String) -> csv::Reader<File> {
 	use std::error::Error;
 
-	let path = csv_dir + filename;
 	match csv::Reader::from_file(&path)
 	{
 		Ok(rdr) => rdr,
-		Err(why) => panic!("Could not open file {} (full path: {}). Reason: {}.", filename, path, Error::description(&why))
+		Err(why) => panic!("Could not open file {}. Reason: {}.", path, Error::description(&why))
 	}
 }
 
@@ -65,26 +64,26 @@ impl Pokedex
 {
 	// Constructs a new Pokedex instance. This will look for the
 	// configuration file and do all necessary Pokemon parsing.
-	pub fn new() -> Pokedex
+	pub fn new(path: String) -> Pokedex
 	{
-		use std::env;
+		// use std::env;
 
-		const CSV_DIR_ENV_VAR: &'static str = "POKEDEX_DIR";
+		// const CSV_DIR_ENV_VAR: &'static str = "POKEDEX_DIR";
 
-		// Read the environment variable which has the location of the
-		// configuration and CSV file directory
-		let csv_dir =
-			match env::var(CSV_DIR_ENV_VAR)
-			{
-				Ok(path) => path + "/",
-				Err(_) => { panic!("Could not find the {} environment variable!", CSV_DIR_ENV_VAR) }
-			};
+		// // Read the environment variable which has the location of the
+		// // configuration and CSV file directory
+		// let csv_dir =
+		// 	match env::var(CSV_DIR_ENV_VAR)
+		// 	{
+		// 		Ok(path) => path + "/",
+		// 		Err(_) => { panic!("Could not find the {} environment variable!", CSV_DIR_ENV_VAR) }
+		// 	};
 
 		// Output variable
 		let mut out = Pokedex { base_pokemon: Vec::new() };
 
 		// Read the pokemon.csv file. Stop once the Pokemon IDs become non-consecutive.
-		for record in get_csv_rdr(csv_dir.clone(), "pokemon.csv").decode()
+		for record in get_csv_rdr(path.clone() + "pokemon.csv").decode()
 		{
 			let (id, identifier, _, _, _, _, _, _):
 			    (i32, String, i32, i32, i32, i32, i32, i32) = record.unwrap();
@@ -107,7 +106,7 @@ impl Pokedex
 		}
 
 		// Read in the Pokemon types
-		for record in get_csv_rdr(csv_dir.clone(), "pokemon_types.csv").decode()
+		for record in get_csv_rdr(path.clone() + "pokemon_types.csv").decode()
 		{
 			let (poke_id, type_id, _): (usize, i32, i32) = record.unwrap();
 
@@ -119,7 +118,7 @@ impl Pokedex
 		}
 
 		// Read in the base stats
-		for record in get_csv_rdr(csv_dir.clone(), "pokemon_stats.csv").decode()
+		for record in get_csv_rdr(path.clone() + "pokemon_stats.csv").decode()
 		{
 			let (poke_id, stat_id, base_stat, _): (usize, i32, i32, i32) = record.unwrap();
 
