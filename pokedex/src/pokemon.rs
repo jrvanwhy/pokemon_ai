@@ -1,8 +1,9 @@
 extern crate rand;
 
 use self::rand::{random, Closed01};
-use pokedex::{MoveDesc,PokeDesc,DamageClass};
+use pokedex::{MoveDesc,PokeDesc,DamageClass,StatMod};
 use std::cmp;
+use std::fmt;
 
 #[derive(Clone)]
 pub enum Status
@@ -62,6 +63,16 @@ fn type_efficacy(_mv_type: &i32, _defender_types: &Vec<i32>) -> (f64)
 	1.0
 }
 
+impl<'a> fmt::Display for Pokemon<'a>
+{
+	fn fmt(&self, f: &mut fmt::Formatter) -> (fmt::Result)
+	{
+		write!(f, "{} lvl: {}\n\thp: {}/{} atk: {} def: {}\n\tsp_atk: {} sp_def: {} speed: {}\n\t",
+		       self.desc.name, self.level, self.hp, self.calc_hp(), self.calc_attack(), self.calc_defense(),
+		       self.calc_sp_atk(), self.calc_sp_def(), self.calc_speed())
+	}
+}
+
 impl<'a> Pokemon<'a>
 {
 	pub fn new<'b>(desc: &'b PokeDesc) -> Pokemon<'b>
@@ -70,7 +81,7 @@ impl<'a> Pokemon<'a>
 		          desc: desc,
 		          moves: Vec::new(),
 		          level: 0,
-		          hp: desc.hp,
+		          hp: 0,
 		          status: Status::Healthy,
 		          crit_stage: 0,
 		          accuracy_stage: 0,
@@ -81,6 +92,26 @@ impl<'a> Pokemon<'a>
 		          sp_def_stage: 0,
 		          speed_stage: 0
 		        }
+	}
+
+	pub fn heal(&mut self) -> ()
+	{
+		self.hp = self.calc_hp();
+		self.status = Status::Healthy;
+
+		self.crit_stage = 0;
+		self.accuracy_stage = 0;
+		self.evasion_stage = 0;
+		self.attack_stage = 0;
+		self.defense_stage = 0;
+		self.sp_atk_stage = 0;
+		self.sp_def_stage = 0;
+		self.speed_stage = 0;
+
+		for mv in self.moves.iter_mut()
+		{
+			mv.pp = mv.desc.pp;
+		}
 	}
 
 	// use gen II calculation method,
@@ -123,7 +154,7 @@ impl<'a> Pokemon<'a>
 		}
 		else
 		{
-			100.0 / (100.0 + 50.0 * stage as f64)
+			100.0 / (100.0 - 50.0 * stage as f64)
 		};
 
 		(((base * self.level) / 50 + 5) as f64 * multiplier) as i32
@@ -132,7 +163,7 @@ impl<'a> Pokemon<'a>
 	
 	pub fn calc_hp(&self) -> (i32)
 	{
-		(self.hp + 50) * self.level / 50 + 10
+		(self.desc.hp + 50) * self.level / 50 + 10
 	}
 
 	// not sure if we want these. I think they make it more
@@ -179,6 +210,7 @@ impl<'a> Pokemon<'a>
 		let Closed01(res) = random::<Closed01<f64>>();
 		if res < prob
 		{
+			println!("critical hit!");
 			2.0
 		}
 		else
@@ -199,6 +231,7 @@ impl<'a> Pokemon<'a>
 		// if move is same type as pokemon, does 1.5 damage
 		let mut modifier = if foe.desc.type_ids.contains(&mv.type_id)
 		{
+			println!("same type modifier!");
 			1.50
 		}
 		else
@@ -232,13 +265,14 @@ impl<'a> Pokemon<'a>
 
 	// this implements move effects on the user of the move
 	// these include status changes and stat modification
-	pub fn use_move(&self, mv: &MoveDesc, _foe: &mut Pokemon) -> ()
+	pub fn use_move(&mut self, mv: &MoveDesc, _foe: &mut Pokemon) -> ()
 	{
-		match mv.damage_class
-		{
-			DamageClass::Status => println!("status moves are not implemented yet for the user. sorry."),
-			_ => println!("physical and special moves are not implemented yet for the user. waiting on move data...")
-		}
+		// match mv.damage_class
+		// {
+		// 	DamageClass::Status => println!("status moves are not implemented yet for the user. sorry."),
+		// 	_ => println!("physical and special moves are not implemented yet for the user. waiting on move data...")
+		// }
+		self.modify_stats(mv.user_stat_effects.clone());
 	}
 
 	// this implements move effects on the recipient of the attack
@@ -246,9 +280,66 @@ impl<'a> Pokemon<'a>
 	pub fn receive_move(&mut self, mv: &MoveDesc, foe: &mut Pokemon) -> ()
 	{
 		// currently just deals damage
-		self.hp = cmp::max(0, self.hp - self.calc_damage(mv, foe));
+		let dmg = self.calc_damage(mv, foe);
 
+		println!("attack dealt {} damage!", dmg);
+
+		self.hp = cmp::max(0, self.hp - dmg);
+
+		self.modify_stats(mv.recip_stat_effects.clone());
 	}
+
+	fn mod_stat(stat: &mut i32, change: i32) -> ()
+	{
+		*stat += change;
+
+		if *stat > 6
+		{
+			*stat = 6;
+		}
+		else if *stat < -6
+		{
+			*stat = -6;
+		}
+	}
+
+	pub fn modify_stats(&mut self, stat_effects: Vec<StatMod>) -> ()
+	{
+		for stat_mod in stat_effects.iter()
+		{
+			match *stat_mod
+			{
+				StatMod::Hp(_) => (),
+				StatMod::Attack(change) => 
+					{
+						Pokemon::mod_stat(&mut self.attack_stage, change);
+						println!("mod attack by {}", change)
+					}
+				StatMod::Defense(change) => 
+					{
+						Pokemon::mod_stat(&mut self.defense_stage, change);
+						println!("mod defense by {}", change)
+					}
+				StatMod::SpAtk(change) => 
+					{
+						Pokemon::mod_stat(&mut self.sp_atk_stage, change);
+						println!("mod sp_atk by {}", change)
+					}
+				StatMod::SpDef(change) => 
+					{
+						Pokemon::mod_stat(&mut self.sp_def_stage, change);
+						println!("mod sp_def by {}", change)
+					}
+				StatMod::Speed(change) => 
+					{
+						Pokemon::mod_stat(&mut self.speed_stage, change);
+						println!("mod speed by {}", change)
+					}
+			}
+		}
+	}
+
+	
 
 	pub fn is_ko(&self) -> (bool)
 	{
