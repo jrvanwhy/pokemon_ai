@@ -18,12 +18,12 @@ pub struct Move<'a>
 {
 	id: i32,
 	pub desc: &'a MoveDesc,
-	pp: i32
+	pub pp: i32
 }
 
 impl<'a> Move<'a>
 {
-	fn new<'b>(desc: &'b MoveDesc) -> Move<'b>
+	pub fn new<'b>(desc: &'b MoveDesc) -> Move<'b>
 	{
 		Move { id: desc.id,
 		       desc: desc,
@@ -232,21 +232,22 @@ impl<'a> Pokemon<'a>
 
 	// this implements move effects on the user of the move
 	// these include status changes and stat modification
-	pub fn use_move(&self, mv: &Move, _foe: &Pokemon) -> ()
+	pub fn use_move(&self, mv: &MoveDesc, _foe: &mut Pokemon) -> ()
 	{
-		match mv.desc.damage_class
-		{
-			DamageClass::Status => println!("status moves are not implemented yet for the user. sorry."),
-			_ => println!("physical and special moves are not implemented yet for the user. waiting on move data...")
-		}
+		// match mv.desc.damage_class
+		// {
+		// 	DamageClass::Status => println!("status moves are not implemented yet for the user. sorry."),
+		// 	_ => println!("physical and special moves are not implemented yet for the user. waiting on move data...")
+		// }
 	}
 
 	// this implements move effects on the recipient of the attack
 	// these can be status, stat, or damage
-	pub fn receive_move(&mut self, mv: &Move, foe: &Pokemon) -> ()
+	pub fn receive_move(&mut self, mv: &MoveDesc, foe: &mut Pokemon) -> ()
 	{
 		// currently just deals damage
-		self.hp = cmp::max(0, self.hp - self.calc_damage(mv, foe));
+		// self.hp = cmp::max(0, self.hp - self.calc_damage(mv, foe));
+
 	}
 
 	pub fn is_ko(&self) -> (bool)
