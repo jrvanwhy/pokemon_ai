@@ -10,10 +10,12 @@ pub enum DamageClass
 	Special
 }
 
+#[derive(Clone,Debug)]
 pub enum Accuracy
 {
 	Finite(f64), // between 0 and 1
 	Infinite
+}
 
 impl DamageClass
 {
@@ -94,15 +96,15 @@ impl Pokedex
 		// This will contain all the move descriptions
 		let mut moves = Vec::<MoveDesc>::new();
 
-		// Read in move.csv
+		// Read in move.csv until a non-consecutive move ID is read
 		for record in get_csv_rdr(path.clone() + "moves.csv").decode()
 		{
 			let (id, identifier, _, type_id, power, pp, accuracy, _, _, damage_class_id, effect_id, effect_chance):
-			    (i32, String, i32, i32, Option<i32>, i32, Option<i32>, i32, i32, i32, i32, Option<i32>) = record.unwrap();
+			    (i32, String, i32, i32, Option<i32>, Option<i32>, Option<i32>, i32, i32, i32, i32, Option<i32>) = record.unwrap();
 
 			if id != moves.len() as i32 + 1
 			{
-				panic!("Unexpected move ID {} read. Expected ID {}.", id, moves.len() + 1);
+				break
 			}
 
 			moves.push(MoveDesc
@@ -111,8 +113,8 @@ impl Pokedex
 				name: identifier,
 				type_id: type_id,
 				power: power.unwrap_or(0),
-				pp: pp,
-				accuracy: (accuracy.unwrap_or(0) as f64) / 100.,
+				pp: pp.unwrap_or(0),
+				accuracy: match accuracy { Some(n) => Accuracy::Finite(n as f64 / 100.), None => Accuracy::Infinite },
 				effect_id: effect_id,
 				effect_chance: effect_chance.unwrap_or(0),
 				damage_class: DamageClass::new(damage_class_id).expect("Invalid damage class in moves.csv")
@@ -130,7 +132,7 @@ impl Pokedex
 
 			if id != out.base_pokemon.len() as i32 + 1
 			{
-				break;
+				break
 			}
 
 			out.base_pokemon.push(PokeDesc { id: id,
