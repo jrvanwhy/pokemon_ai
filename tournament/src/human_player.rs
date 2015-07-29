@@ -111,10 +111,12 @@ impl<'a> PokePlayer<'a> for HumanPlayer<'a>
 		}
 	}
 
-	fn choose_action(&self) -> (Action)
+	fn choose_action(&mut self) -> (Action)
 	{
 		loop
 		{
+			let cur_pkn = self.get_cur_pkn();
+			println!("cur pkn: {}; hp: {} / {}", cur_pkn.desc.name, cur_pkn.hp, cur_pkn.desc.hp);
 			println!("\t[0] - Attack");
 			println!("\t[1] - Pokemon");
 			println!("\t[2] - Item");
