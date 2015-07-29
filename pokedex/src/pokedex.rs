@@ -32,6 +32,34 @@ impl DamageClass
 }
 
 #[derive(Clone,Debug)]
+pub enum StatMod
+{
+	Hp(i32),
+	Attack(i32),
+	Defense(i32),
+	SpAtk(i32),
+	SpDef(i32),
+	Speed(i32)
+}
+
+impl StatMod
+{
+	pub fn new(id: i32, change: i32) -> Option<StatMod>
+	{
+		match id
+		{
+			1 => Some(StatMod::Hp(change)),
+			2 => Some(StatMod::Attack(change)),
+			3 => Some(StatMod::Defense(change)),
+			4 => Some(StatMod::SpAtk(change)),
+			5 => Some(StatMod::SpDef(change)),
+			6 => Some(StatMod::Speed(change)),
+			_ => None
+		}
+	}
+}
+
+#[derive(Clone,Debug)]
 pub struct MoveDesc
 {
 	pub id: i32,
@@ -43,6 +71,7 @@ pub struct MoveDesc
 	pub effect_id: i32,
 	pub effect_chance: i32,
 	pub damage_class: DamageClass,
+	pub status_effects: Vec<StatMod>
 }
 
 // all of these pubs can't be the best way to do this.
@@ -117,8 +146,21 @@ impl Pokedex
 				accuracy: match accuracy { Some(n) => Accuracy::Finite(n as f64 / 100.), None => Accuracy::Infinite },
 				effect_id: effect_id,
 				effect_chance: effect_chance.unwrap_or(0),
-				damage_class: DamageClass::new(damage_class_id).expect("Invalid damage class in moves.csv")
+				damage_class: DamageClass::new(damage_class_id).expect("Invalid damage class in moves.csv"),
+				status_effects: Vec::new()
 			});
+		}
+
+		// Read in the move status effects
+		for record in get_csv_rdr(path.clone() + "move_meta_stat_changes.csv").decode()
+		{
+			let (move_id, stat_id, change): (usize, i32, i32) = record.unwrap();
+
+			match StatMod::new(stat_id, change)
+			{
+				Some(m) => moves[move_id - 1].status_effects.push(m),
+				None => {}
+			}
 		}
 
 		// Output variable
@@ -135,16 +177,19 @@ impl Pokedex
 				break
 			}
 
-			out.base_pokemon.push(PokeDesc { id: id,
-			                                 type_ids: Vec::new(),
-			                                 hp: 0,
-			                                 attack: 0,
-			                                 defense: 0,
-			                                 sp_atk: 0,
-			                                 sp_def: 0,
-			                                 speed: 0,
-			                                 avail_moves: Vec::new(),
-			                                 name: identifier } );
+			out.base_pokemon.push(PokeDesc
+			{
+				id: id,
+				type_ids: Vec::new(),
+				hp: 0,
+				attack: 0,
+				defense: 0,
+				sp_atk: 0,
+				sp_def: 0,
+				speed: 0,
+				avail_moves: Vec::new(),
+				name: identifier
+			});
 		}
 
 		// Read in the Pokemon types
@@ -180,6 +225,20 @@ impl Pokedex
 				6 => &mut cur_poke.speed,
 				_ => panic!("Unknown stat ID {} found for pokemon {}!", stat_id, poke_id)
 			} = base_stat;
+		}
+
+		// Match Pokemon with their moves.
+		for record in get_csv_rdr(path.clone() + "pokemon_moves.csv").decode()
+		{
+			let (poke_id, _, move_id, _, _, _): (usize, i32, usize, i32, i32, Option<i32>) = record.unwrap();
+
+			// Ignore moves for high-ID pokemon.
+			if poke_id >= out.base_pokemon.len()
+			{
+				continue
+			}
+
+			out.base_pokemon[poke_id - 1].avail_moves.push(moves.get(move_id - 1).expect("Invalid move read from pokemon_moves.csv").clone());
 		}
 
 		out
