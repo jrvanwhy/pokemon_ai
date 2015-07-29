@@ -10,6 +10,12 @@ pub enum DamageClass
 	Special
 }
 
+pub enum Accuracy
+{
+	Finite(f64), // between 0 and 1
+	Infinite
+}
+
 #[derive(Clone,Debug)]
 pub struct MoveDesc
 {
@@ -18,7 +24,7 @@ pub struct MoveDesc
 	pub type_id: i32,
 	pub power: i32,
 	pub pp: i32,
-	pub accuracy: f64, // between 0 and 1
+	pub accuracy: Accuracy,
 	pub effect_id: i32,
 	pub effect_chance: i32,
 	pub damage_class: DamageClass,
