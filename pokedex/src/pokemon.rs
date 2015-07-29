@@ -14,23 +14,34 @@ pub enum Status
 }
 
 #[derive(Clone)]
-pub struct Move
+pub struct Move<'a>
 {
 	id: i32,
-	pub desc: MoveDesc,
+	pub desc: &'a MoveDesc,
 	pp: i32
 }
 
-#[derive(Clone)]
-pub struct Pokemon
+impl<'a> Move<'a>
 {
-	id: i32,
-	desc: PokeDesc,
+	fn new<'b>(desc: &'b MoveDesc) -> Move<'b>
+	{
+		Move { id: desc.id,
+		       desc: desc,
+		       pp: desc.pp
+		     }
+	}
+}
+
+#[derive(Clone)]
+pub struct Pokemon<'a>
+{
+	pub id: i32,
+	pub desc: &'a PokeDesc,
 	// set in config
-	moves: Vec<Move>,
+	pub moves: Vec<Move<'a>>,
 	pub level: i32,
 	// change during battle
-	hp: i32,
+	pub hp: i32,
 	status: Status,
 	// these are used for
 	// calculating stat
@@ -51,8 +62,27 @@ fn type_efficacy(_mv_type: &i32, _defender_types: &Vec<i32>) -> (f64)
 	1.0
 }
 
-impl Pokemon
+impl<'a> Pokemon<'a>
 {
+	pub fn new<'b>(desc: &'b PokeDesc) -> Pokemon<'b>
+	{
+		Pokemon { id: desc.id,
+		          desc: desc,
+		          moves: Vec::new(),
+		          level: 0,
+		          hp: desc.hp,
+		          status: Status::Healthy,
+		          crit_stage: 0,
+		          accuracy_stage: 0,
+		          evasion_stage: 0,
+		          attack_stage: 0,
+		          defense_stage: 0,
+		          sp_atk_stage: 0,
+		          sp_def_stage: 0,
+		          speed_stage: 0
+		        }
+	}
+
 	// use gen II calculation method,
 	// this is due to simplicity
 	pub fn calc_accuracy(&self) -> (f64)
@@ -227,7 +257,7 @@ impl Pokemon
 	// could hard code 4 into AI or could make this return success
 	// currently, I'm thinking that hard-coding makes the most sense
 	// because returning success seems ambiguous or at least confusing
-	pub fn add_move(&mut self, mv: Move) -> ()
+	pub fn add_move(&mut self, mv: Move<'a>) -> ()
 	{
 		if self.moves.len() < 4
 		{
