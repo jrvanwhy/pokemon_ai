@@ -3,15 +3,18 @@ extern crate battle_sim;
 extern crate toml;
 
 mod human_player;
-// use std::fs::File;
+mod simple_ai;
+
 use std::env;
 
 use pokedex::Pokedex;
 use pokedex::Pokemon;
 use pokedex::Move;
+use battle_sim::PokePlayer;
 use human_player::HumanPlayer;
+use simple_ai::SimpleAI;
 
-fn configure_player<'a>(dex: &'a Pokedex, player: &mut HumanPlayer<'a>, team: Vec<(usize, Vec<i32>)>)
+fn configure_player<'a, T: PokePlayer<'a>>(dex: &'a Pokedex, player: &mut T, team: Vec<(usize, Vec<i32>)>)
 {
 	for (id, moves) in team
 	{
@@ -40,7 +43,7 @@ fn configure_player<'a>(dex: &'a Pokedex, player: &mut HumanPlayer<'a>, team: Ve
 
 		pkn.heal();
 
-		player.team.add_pkn(pkn);
+		player.get_team_mut().add_pkn(pkn);
 	}
 }
 
@@ -57,12 +60,12 @@ fn main() {
 		panic!("need 1 arg");
 	}
 
-	let mut p1 = HumanPlayer::new("player 1".to_string());
+	let mut p1 = SimpleAI::new("player 1".to_string());
 	let mut p2 = HumanPlayer::new("player 2".to_string());
 
 	let mut mv1 = Vec::new();
-	mv1.push(14);
 	mv1.push(15);
+	mv1.push(14);
 	mv1.push(22);
 	mv1.push(33);
 

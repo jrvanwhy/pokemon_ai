@@ -19,11 +19,11 @@ pub trait PokePlayer<'a>
 
 	fn get_team_mut(&mut self) -> (&mut Team<'a>);
 
-	fn choose_move(&self) -> (usize);
+	fn choose_move<'b, T: PokePlayer<'b>>(&self, &T) -> (usize);
 
-	fn choose_pkn(&self) -> (usize);
+	fn choose_pkn<'b, T: PokePlayer<'b>>(&self, &T) -> (usize);
 
-	fn choose_action(&self) -> (Action);
+	fn choose_action<'b, T: PokePlayer<'b>>(&self, &T) -> (Action);
 }
 
 #[derive(Clone)]
@@ -201,13 +201,13 @@ fn play_turn<'a, T1: PokePlayer<'a>, T2: PokePlayer<'a>>(p1: &mut T1, p2: &mut T
 fn play_action<'a, T1: PokePlayer<'a>, T2: PokePlayer<'a>>(cur_p: &mut T1, oth_p: &mut T2) -> ()
 {
 	// choose between menu options
-	match cur_p.choose_action()
+	match cur_p.choose_action(oth_p)
 	{
 		Action::Attack =>
 			{
 				// moves can affect both attacker
 				// and attacked
-				let mv_ind = cur_p.choose_move();
+				let mv_ind = cur_p.choose_move(oth_p);
 
 				if cur_p.get_team().get_move(mv_ind).unwrap().pp > 0
 				{
@@ -228,11 +228,11 @@ fn play_action<'a, T1: PokePlayer<'a>, T2: PokePlayer<'a>>(cur_p: &mut T1, oth_p
 						cur_p.get_team_mut().get_cur_pkn_mut().unwrap().use_move(&mv, &mut oth_p.get_team_mut().get_cur_pkn_mut().unwrap());
 						
 						// replace ko'd pokemon
-						if !replace_ko(cur_p)
+						if !replace_ko(cur_p, oth_p)
 						{
 							return ();
 						}
-						if !replace_ko(oth_p)
+						if !replace_ko(oth_p, cur_p)
 						{
 							return ();
 						}
@@ -240,11 +240,11 @@ fn play_action<'a, T1: PokePlayer<'a>, T2: PokePlayer<'a>>(cur_p: &mut T1, oth_p
 						oth_p.get_team_mut().get_cur_pkn_mut().unwrap().receive_move(&mv, &mut cur_p.get_team_mut().get_cur_pkn_mut().unwrap());
 
 						// replace ko'd pokemon
-						if !replace_ko(cur_p)
+						if !replace_ko(cur_p, oth_p)
 						{
 							return ();
 						}
-						if !replace_ko(oth_p)
+						if !replace_ko(oth_p, cur_p)
 						{
 							return ();
 						}
@@ -306,7 +306,7 @@ fn play_action<'a, T1: PokePlayer<'a>, T2: PokePlayer<'a>>(cur_p: &mut T1, oth_p
 			{
 				loop
 				{
-					let pkn_ind = cur_p.choose_pkn();
+					let pkn_ind = cur_p.choose_pkn(oth_p);
 					if cur_p.get_team_mut().set_cur_pkn(pkn_ind)
 					{
 						break;
@@ -321,22 +321,22 @@ fn play_action<'a, T1: PokePlayer<'a>, T2: PokePlayer<'a>>(cur_p: &mut T1, oth_p
 	}
 }
 
-fn replace_ko<'a, T: PokePlayer<'a>>(p: &mut T) -> (bool)
+fn replace_ko<'a, T1: PokePlayer<'a>, T2: PokePlayer<'a>>(p1: &mut T1, p2: &T2) -> (bool)
 {
-	match p.get_team().get_cur_pkn()
+	match p1.get_team().get_cur_pkn()
 	{
 		Some(_) => true,
 		None =>
 			{
-				if p.get_team().is_defeated()
+				if p1.get_team().is_defeated()
 				{
 					return false;
 				}
-				println!("{}, your pokemon fainted. pick another.", p.get_name());
+				println!("{}, your pokemon fainted. pick another.", p1.get_name());
 				loop
 				{
-					let pkn_ind = p.choose_pkn();
-					if p.get_team_mut().set_cur_pkn(pkn_ind)
+					let pkn_ind = p1.choose_pkn(p2);
+					if p1.get_team_mut().set_cur_pkn(pkn_ind)
 					{
 						break;
 					}

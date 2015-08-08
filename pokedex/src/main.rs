@@ -1,7 +1,19 @@
+use std::env;
+
 mod pokedex;
 
 fn main() {
-	let pd = pokedex::Pokedex::new("/home/ryan/repos/pokemon_ai/csv/".to_string());
+	let args: Vec<_> = env::args().collect();
+
+	let pd: pokedex::Pokedex;
+	if args.len() == 2
+	{
+		pd = pokedex::Pokedex::new(args[1].clone());
+	}
+	else
+	{
+		panic!("need 1 arg");
+	}
 	println!("{:?}", pd.get_poke_desc(10));
 	println!("{:?}", pd.get_poke_desc(15));
 	println!("{:?}", pd.get_poke_desc(15).unwrap().get_move_desc(2));
