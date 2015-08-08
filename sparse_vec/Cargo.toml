@@ -1,0 +1,4 @@
+[package]
+name = "sparse_vec"
+version = "0.1.0"
+authors = ["Johnathan Van Why <jrvanwhy@gmail.com>"]
