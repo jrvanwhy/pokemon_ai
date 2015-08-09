@@ -3,6 +3,9 @@ name = "team_select"
 version = "0.1.0"
 authors = ["Johnathan Van Why <jrvanwhy@gmail.com>"]
 
+[dependencies.battle_sim]
+path = "../battle_sim"
+
 [profile.dev]
 codegen-units = 4
 
