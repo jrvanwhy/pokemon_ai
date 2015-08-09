@@ -11,3 +11,9 @@ path = "../pokedex"
 
 [dependencies.battle_sim]
 path = "../battle_sim"
+
+[profile.dev]
+codegen-units = 4
+
+[profile.release]
+lto = true
